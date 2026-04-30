@@ -1,0 +1,1964 @@
+<!DOCTYPE html>
+<html lang="en" class="Internet-Draft">
+<head>
+<meta charset="utf-8">
+<meta content="Common,Latin" name="scripts">
+<meta content="initial-scale=1.0" name="viewport">
+<title>Secure Delegation Management for RESTful Provisioning Protocol (RPP)</title>
+<meta content="Maarten Wullink" name="author">
+<meta content="Pawel Kowalik" name="author">
+<meta content="
+       This document describes how OAuth 2.0   can be used to allow a third party, such as a DNS Operator, to manage delegation (name server) details for a domain in the registry database on behalf of the registrant. It extends the RPP OAuth 2.0 authorization model defined in   with mechanisms specific to third-party delegation management via the RESTful Provisioning Protocol (RPP)  . 
+    " name="description">
+<meta content="xml2rfc 3.18.2" name="generator">
+<meta content="draft-wullink-rpp-oauth2-delegation-00" name="ietf.draft">
+<!-- Generator version information:
+  xml2rfc 3.18.2
+    Python 3.11.12
+    ConfigArgParse 1.7
+    google-i18n-address 3.1.0
+    intervaltree 3.1.0
+    jinja2 3.1.6
+    lxml 5.3.1
+    platformdirs 4.0.0
+    pycountry 22.3.5
+    PyYAML 6.0.1
+    requests 2.31.0
+    setuptools 78.1.0
+    six 1.16.0
+    wcwidth 0.2.9
+    weasyprint 55.0
+-->
+<link href="../docs/draft-wullink-rpp-oauth2-delegation.xml" rel="alternate" type="application/rfc+xml">
+<link href="#copyright" rel="license">
+<style type="text/css">/*
+
+  NOTE: Changes at the bottom of this file overrides some earlier settings.
+
+  Once the style has stabilized and has been adopted as an official RFC style,
+  this can be consolidated so that style settings occur only in one place, but
+  for now the contents of this file consists first of the initial CSS work as
+  provided to the RFC Formatter (xml2rfc) work, followed by itemized and
+  commented changes found necessary during the development of the v3
+  formatters.
+
+*/
+
+/* fonts */
+@import url('https://fonts.googleapis.com/css?family=Noto+Sans'); /* Sans-serif */
+@import url('https://fonts.googleapis.com/css?family=Noto+Serif'); /* Serif (print) */
+@import url('https://fonts.googleapis.com/css?family=Roboto+Mono'); /* Monospace */
+
+:root {
+  --font-sans: 'Noto Sans', Arial, Helvetica, sans-serif;
+  --font-serif: 'Noto Serif', 'Times', 'Times New Roman', serif;
+  --font-mono: 'Roboto Mono', Courier, 'Courier New', monospace;
+}
+
+@viewport {
+  zoom: 1.0;
+}
+@-ms-viewport {
+  width: extend-to-zoom;
+  zoom: 1.0;
+}
+/* general and mobile first */
+html {
+}
+body {
+  max-width: 90%;
+  margin: 1.5em auto;
+  color: #222;
+  background-color: #fff;
+  font-size: 14px;
+  font-family: var(--font-sans);
+  line-height: 1.6;
+  scroll-behavior: smooth;
+  overflow-wrap: break-word;
+}
+.ears {
+  display: none;
+}
+
+/* headings */
+#title, h1, h2, h3, h4, h5, h6 {
+  margin: 1em 0 0.5em;
+  font-weight: bold;
+  line-height: 1.3;
+}
+#title {
+  clear: both;
+  border-bottom: 1px solid #ddd;
+  margin: 0 0 0.5em 0;
+  padding: 1em 0 0.5em;
+}
+.author {
+  padding-bottom: 4px;
+}
+h1 {
+  font-size: 26px;
+  margin: 1em 0;
+}
+h2 {
+  font-size: 22px;
+  margin-top: -20px;  /* provide offset for in-page anchors */
+  padding-top: 33px;
+}
+h3 {
+  font-size: 18px;
+  margin-top: -36px;  /* provide offset for in-page anchors */
+  padding-top: 42px;
+}
+h4 {
+  font-size: 16px;
+  margin-top: -36px;  /* provide offset for in-page anchors */
+  padding-top: 42px;
+}
+h5, h6 {
+  font-size: 14px;
+}
+#n-copyright-notice {
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 1em;
+  margin-bottom: 1em;
+}
+/* general structure */
+p {
+  padding: 0;
+  margin: 0 0 1em 0;
+  text-align: left;
+}
+div, span {
+  position: relative;
+}
+div {
+  margin: 0;
+}
+.alignRight.art-text {
+  background-color: #f9f9f9;
+  border: 1px solid #eee;
+  border-radius: 3px;
+  padding: 1em 1em 0;
+  margin-bottom: 1.5em;
+}
+.alignRight.art-text pre {
+  padding: 0;
+}
+.alignRight {
+  margin: 1em 0;
+}
+.alignRight > *:first-child {
+  border: none;
+  margin: 0;
+  float: right;
+  clear: both;
+}
+.alignRight > *:nth-child(2) {
+  clear: both;
+  display: block;
+  border: none;
+}
+svg {
+  display: block;
+}
+svg[font-family~="serif" i], svg [font-family~="serif" i] {
+  font-family: var(--font-serif);
+}
+svg[font-family~="sans-serif" i], svg [font-family~="sans-serif" i] {
+  font-family: var(--font-sans);
+}
+svg[font-family~="monospace" i], svg [font-family~="monospace" i] {
+  font-family: var(--font-mono);
+}
+.alignCenter.art-text {
+  background-color: #f9f9f9;
+  border: 1px solid #eee;
+  border-radius: 3px;
+  padding: 1em 1em 0;
+  margin-bottom: 1.5em;
+}
+.alignCenter.art-text pre {
+  padding: 0;
+}
+.alignCenter {
+  margin: 1em 0;
+}
+.alignCenter > *:first-child {
+  display: table;
+  border: none;
+  margin: 0 auto;
+}
+
+/* lists */
+ol, ul {
+  padding: 0;
+  margin: 0 0 1em 2em;
+}
+ol ol, ul ul, ol ul, ul ol {
+  margin-left: 1em;
+}
+li {
+  margin: 0 0 0.25em 0;
+}
+.ulCompact li {
+  margin: 0;
+}
+ul.empty, .ulEmpty {
+  list-style-type: none;
+}
+ul.empty li, .ulEmpty li {
+  margin-top: 0.5em;
+}
+ul.ulBare, li.ulBare {
+  margin-left: 0em !important;
+}
+ul.compact, .ulCompact,
+ol.compact, .olCompact {
+  line-height: 100%;
+  margin: 0 0 0 2em;
+}
+
+/* definition lists */
+dl {
+}
+dl > dt {
+  float: left;
+  margin-right: 1em;
+}
+/* 
+dl.nohang > dt {
+  float: none;
+}
+*/
+dl > dd {
+  margin-bottom: .8em;
+  min-height: 1.3em;
+}
+dl.compact > dd, .dlCompact > dd {
+  margin-bottom: 0em;
+}
+dl > dd > dl {
+  margin-top: 0.5em;
+  margin-bottom: 0em;
+}
+
+/* links */
+a {
+  text-decoration: none;
+}
+a[href] {
+  color: #22e; /* Arlen: WCAG 2019 */
+}
+a[href]:hover {
+  background-color: #f2f2f2;
+}
+figcaption a[href],
+a[href].selfRef,
+.iref + a[href].internal {
+  color: #222;
+}
+/* XXX probably not this:
+a.selfRef:hover {
+  background-color: transparent;
+  cursor: default;
+} */
+
+/* Figures */
+tt, code, pre {
+  background-color: #f9f9f9;
+  font-family: var(--font-mono);
+}
+pre {
+  border: 1px solid #eee;
+  margin: 0;
+  padding: 1em;
+}
+img {
+  max-width: 100%;
+}
+figure {
+  margin: 0;
+}
+figure blockquote {
+  margin: 0.8em 0.4em 0.4em;
+}
+figcaption {
+  font-style: italic;
+  margin: 0 0 1em 0;
+}
+@media screen {
+  pre {
+    overflow-x: auto;
+    max-width: 100%;
+    max-width: calc(100% - 22px);
+  }
+}
+
+/* aside, blockquote */
+aside, blockquote {
+  margin-left: 0;
+  padding: 1.2em 2em;
+}
+blockquote {
+  background-color: #f9f9f9;
+  color: #111; /* Arlen: WCAG 2019 */
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  margin: 1em 0;
+}
+blockquote > *:last-child {
+  margin-bottom: 0;
+}
+cite {
+  display: block;
+  text-align: right;
+  font-style: italic;
+}
+
+/* tables */
+table {
+  width: 100%;
+  margin: 0 0 1em;
+  border-collapse: collapse;
+  border: 1px solid #eee;
+}
+th, td {
+  text-align: left;
+  vertical-align: top;
+  padding: 0.5em 0.75em;
+}
+th {
+  text-align: left;
+  background-color: #e9e9e9;
+}
+tr:nth-child(2n+1) > td {
+  background-color: #f5f5f5;
+}
+table caption {
+  font-style: italic;
+  margin: 0;
+  padding: 0;
+  text-align: left;
+}
+table p {
+  /* XXX to avoid bottom margin on table row signifiers. If paragraphs should
+     be allowed within tables more generally, it would be far better to select on a class. */
+  margin: 0;
+}
+
+/* pilcrow */
+a.pilcrow {
+  color: #666; /* Arlen: AHDJ 2019 */
+  text-decoration: none;
+  visibility: hidden;
+  user-select: none;
+  -ms-user-select: none;
+  -o-user-select:none;
+  -moz-user-select: none;
+  -khtml-user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+@media screen {
+  aside:hover > a.pilcrow,
+  p:hover > a.pilcrow,
+  blockquote:hover > a.pilcrow,
+  div:hover > a.pilcrow,
+  li:hover > a.pilcrow,
+  pre:hover > a.pilcrow {
+    visibility: visible;
+  }
+  a.pilcrow:hover {
+    background-color: transparent;
+  }
+}
+
+/* misc */
+hr {
+  border: 0;
+  border-top: 1px solid #eee;
+}
+.bcp14 {
+  font-variant: small-caps;
+}
+
+.role {
+  font-variant: all-small-caps;
+}
+
+/* info block */
+#identifiers {
+  margin: 0;
+  font-size: 0.9em;
+}
+#identifiers dt {
+  width: 3em;
+  clear: left;
+}
+#identifiers dd {
+  float: left;
+  margin-bottom: 0;
+}
+/* Fix PDF info block run off issue */
+@media print {
+  #identifiers dd {
+    float: none;
+  }
+}
+#identifiers .authors .author {
+  display: inline-block;
+  margin-right: 1.5em;
+}
+#identifiers .authors .org {
+  font-style: italic;
+}
+
+/* The prepared/rendered info at the very bottom of the page */
+.docInfo {
+  color: #666; /* Arlen: WCAG 2019 */
+  font-size: 0.9em;
+  font-style: italic;
+  margin-top: 2em;
+}
+.docInfo .prepared {
+  float: left;
+}
+.docInfo .prepared {
+  float: right;
+}
+
+/* table of contents */
+#toc  {
+  padding: 0.75em 0 2em 0;
+  margin-bottom: 1em;
+}
+nav.toc ul {
+  margin: 0 0.5em 0 0;
+  padding: 0;
+  list-style: none;
+}
+nav.toc li {
+  line-height: 1.3em;
+  margin: 0.75em 0;
+  padding-left: 1.2em;
+  text-indent: -1.2em;
+}
+/* references */
+.references dt {
+  text-align: right;
+  font-weight: bold;
+  min-width: 7em;
+}
+.references dd {
+  margin-left: 8em;
+  overflow: auto;
+}
+
+.refInstance {
+  margin-bottom: 1.25em;
+}
+
+.references .ascii {
+  margin-bottom: 0.25em;
+}
+
+/* index */
+.index ul {
+  margin: 0 0 0 1em;
+  padding: 0;
+  list-style: none;
+}
+.index ul ul {
+  margin: 0;
+}
+.index li {
+  margin: 0;
+  text-indent: -2em;
+  padding-left: 2em;
+  padding-bottom: 5px;
+}
+.indexIndex {
+  margin: 0.5em 0 1em;
+}
+.index a {
+  font-weight: 700;
+}
+/* make the index two-column on all but the smallest screens */
+@media (min-width: 600px) {
+  .index ul {
+    -moz-column-count: 2;
+    -moz-column-gap: 20px;
+  }
+  .index ul ul {
+    -moz-column-count: 1;
+    -moz-column-gap: 0;
+  }
+}
+
+/* authors */
+address.vcard {
+  font-style: normal;
+  margin: 1em 0;
+}
+
+address.vcard .nameRole {
+  font-weight: 700;
+  margin-left: 0;
+}
+address.vcard .label {
+  font-family: var(--font-sans);
+  margin: 0.5em 0;
+}
+address.vcard .type {
+  display: none;
+}
+.alternative-contact {
+  margin: 1.5em 0 1em;
+}
+hr.addr {
+  border-top: 1px dashed;
+  margin: 0;
+  color: #ddd;
+  max-width: calc(100% - 16px);
+}
+
+/* temporary notes */
+.rfcEditorRemove::before {
+  position: absolute;
+  top: 0.2em;
+  right: 0.2em;
+  padding: 0.2em;
+  content: "The RFC Editor will remove this note";
+  color: #9e2a00; /* Arlen: WCAG 2019 */
+  background-color: #ffd; /* Arlen: WCAG 2019 */
+}
+.rfcEditorRemove {
+  position: relative;
+  padding-top: 1.8em;
+  background-color: #ffd; /* Arlen: WCAG 2019 */
+  border-radius: 3px;
+}
+.cref {
+  background-color: #ffd; /* Arlen: WCAG 2019 */
+  padding: 2px 4px;
+}
+.crefSource {
+  font-style: italic;
+}
+/* alternative layout for smaller screens */
+@media screen and (max-width: 1023px) {
+  body {
+    padding-top: 2em;
+  }
+  #title {
+    padding: 1em 0;
+  }
+  h1 {
+    font-size: 24px;
+  }
+  h2 {
+    font-size: 20px;
+    margin-top: -18px;  /* provide offset for in-page anchors */
+    padding-top: 38px;
+  }
+  #identifiers dd {
+    max-width: 60%;
+  }
+  #toc {
+    position: fixed;
+    z-index: 2;
+    top: 0;
+    right: 0;
+    padding: 0;
+    margin: 0;
+    background-color: inherit;
+    border-bottom: 1px solid #ccc;
+  }
+  #toc h2 {
+    margin: -1px 0 0 0;
+    padding: 4px 0 4px 6px;
+    padding-right: 1em;
+    min-width: 190px;
+    font-size: 1.1em;
+    text-align: right;
+    background-color: #444;
+    color: white;
+    cursor: pointer;
+  }
+  #toc h2::before { /* css hamburger */
+    float: right;
+    position: relative;
+    width: 1em;
+    height: 1px;
+    left: -164px;
+    margin: 6px 0 0 0;
+    background: white none repeat scroll 0 0;
+    box-shadow: 0 4px 0 0 white, 0 8px 0 0 white;
+    content: "";
+  }
+  #toc nav {
+    display: none;
+    padding: 0.5em 1em 1em;
+    overflow: auto;
+    height: calc(100vh - 48px);
+    border-left: 1px solid #ddd;
+  }
+}
+
+/* alternative layout for wide screens */
+@media screen and (min-width: 1024px) {
+  body {
+    max-width: 724px;
+    margin: 42px auto;
+    padding-left: 1.5em;
+    padding-right: 29em;
+  }
+  #toc {
+    position: fixed;
+    top: 42px;
+    right: 42px;
+    width: 25%;
+    margin: 0;
+    padding: 0 1em;
+    z-index: 1;
+  }
+  #toc h2 {
+    border-top: none;
+    border-bottom: 1px solid #ddd;
+    font-size: 1em;
+    font-weight: normal;
+    margin: 0;
+    padding: 0.25em 1em 1em 0;
+  }
+  #toc nav {
+    display: block;
+    height: calc(90vh - 84px);
+    bottom: 0;
+    padding: 0.5em 0 0;
+    overflow: auto;
+  }
+  img { /* future proofing */
+    max-width: 100%;
+    height: auto;
+  }
+}
+
+/* pagination */
+@media print {
+  body {
+    width: 100%;
+  }
+  p {
+    orphans: 3;
+    widows: 3;
+  }
+  #n-copyright-notice {
+    border-bottom: none;
+  }
+  #toc, #n-introduction {
+    page-break-before: always;
+  }
+  #toc {
+    border-top: none;
+    padding-top: 0;
+  }
+  figure, pre {
+    page-break-inside: avoid;
+  }
+  figure {
+    overflow: scroll;
+  }
+  .breakable pre {
+    break-inside: auto;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    page-break-after: avoid;
+  }
+  h2+*, h3+*, h4+*, h5+*, h6+* {
+    page-break-before: avoid;
+  }
+  pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-size: 10pt;
+  }
+  table {
+    border: 1px solid #ddd;
+  }
+  td {
+    border-top: 1px solid #ddd;
+  }
+}
+
+/* This is commented out here, as the string-set: doesn't
+   pass W3C validation currently */
+/*
+.ears thead .left {
+  string-set: ears-top-left content();
+}
+
+.ears thead .center {
+  string-set: ears-top-center content();
+}
+
+.ears thead .right {
+  string-set: ears-top-right content();
+}
+
+.ears tfoot .left {
+  string-set: ears-bottom-left content();
+}
+
+.ears tfoot .center {
+  string-set: ears-bottom-center content();
+}
+
+.ears tfoot .right {
+  string-set: ears-bottom-right content();
+}
+*/
+
+@page :first {
+  padding-top: 0;
+  @top-left {
+    content: normal;
+    border: none;
+  }
+  @top-center {
+    content: normal;
+    border: none;
+  }
+  @top-right {
+    content: normal;
+    border: none;
+  }
+}
+
+@page {
+  size: A4;
+  margin-bottom: 45mm;
+  padding-top: 20px;
+  /* The following is commented out here, but set appropriately by in code, as
+     the content depends on the document */
+  /*
+  @top-left {
+    content: 'Internet-Draft';
+    vertical-align: bottom;
+    border-bottom: solid 1px #ccc;
+  }
+  @top-left {
+    content: string(ears-top-left);
+    vertical-align: bottom;
+    border-bottom: solid 1px #ccc;
+  }
+  @top-center {
+    content: string(ears-top-center);
+    vertical-align: bottom;
+    border-bottom: solid 1px #ccc;
+  }
+  @top-right {
+    content: string(ears-top-right);
+    vertical-align: bottom;
+    border-bottom: solid 1px #ccc;
+  }
+  @bottom-left {
+    content: string(ears-bottom-left);
+    vertical-align: top;
+    border-top: solid 1px #ccc;
+  }
+  @bottom-center {
+    content: string(ears-bottom-center);
+    vertical-align: top;
+    border-top: solid 1px #ccc;
+  }
+  @bottom-right {
+      content: '[Page ' counter(page) ']';
+      vertical-align: top;
+      border-top: solid 1px #ccc;
+  }
+  */
+
+}
+
+/* Changes introduced to fix issues found during implementation */
+/* Make sure links are clickable even if overlapped by following H* */
+a {
+  z-index: 2;
+}
+/* Separate body from document info even without intervening H1 */
+section {
+  clear: both;
+}
+
+
+/* Top align author divs, to avoid names without organization dropping level with org names */
+.author {
+  vertical-align: top;
+}
+
+/* Leave room in document info to show Internet-Draft on one line */
+#identifiers dt {
+  width: 8em;
+}
+
+/* Don't waste quite as much whitespace between label and value in doc info */
+#identifiers dd {
+  margin-left: 1em;
+}
+
+/* Give floating toc a background color (needed when it's a div inside section */
+#toc {
+  background-color: white;
+}
+
+/* Make the collapsed ToC header render white on gray also when it's a link */
+@media screen and (max-width: 1023px) {
+  #toc h2 a,
+  #toc h2 a:link,
+  #toc h2 a:focus,
+  #toc h2 a:hover,
+  #toc a.toplink,
+  #toc a.toplink:hover {
+    color: white;
+    background-color: #444;
+    text-decoration: none;
+  }
+}
+
+/* Give the bottom of the ToC some whitespace */
+@media screen and (min-width: 1024px) {
+  #toc {
+    padding: 0 0 1em 1em;
+  }
+}
+
+/* Style section numbers with more space between number and title */
+.section-number {
+  padding-right: 0.5em;
+}
+
+/* prevent monospace from becoming overly large */
+tt, code, pre {
+  font-size: 95%;
+}
+
+/* Fix the height/width aspect for ascii art*/
+.sourcecode pre,
+.art-text pre {
+  line-height: 1.12;
+}
+
+
+/* Add styling for a link in the ToC that points to the top of the document */
+a.toplink {
+  float: right;
+  margin-right: 0.5em;
+}
+
+/* Fix the dl styling to match the RFC 7992 attributes */
+dl > dt,
+dl.dlParallel > dt {
+  float: left;
+  margin-right: 1em;
+}
+dl.dlNewline > dt {
+  float: none;
+}
+
+/* Provide styling for table cell text alignment */
+table td.text-left,
+table th.text-left {
+  text-align: left;
+}
+table td.text-center,
+table th.text-center {
+  text-align: center;
+}
+table td.text-right,
+table th.text-right {
+  text-align: right;
+}
+
+/* Make the alternative author contact information look less like just another
+   author, and group it closer with the primary author contact information */
+.alternative-contact {
+  margin: 0.5em 0 0.25em 0;
+}
+address .non-ascii {
+  margin: 0 0 0 2em;
+}
+
+/* With it being possible to set tables with alignment
+  left, center, and right, { width: 100%; } does not make sense */
+table {
+  width: auto;
+}
+
+/* Avoid reference text that sits in a block with very wide left margin,
+   because of a long floating dt label.*/
+.references dd {
+  overflow: visible;
+}
+
+/* Control caption placement */
+caption {
+  caption-side: bottom;
+}
+
+/* Limit the width of the author address vcard, so names in right-to-left
+   script don't end up on the other side of the page. */
+
+address.vcard {
+  max-width: 30em;
+  margin-right: auto;
+}
+
+/* For address alignment dependent on LTR or RTL scripts */
+address div.left {
+  text-align: left;
+}
+address div.right {
+  text-align: right;
+}
+
+/* Provide table alignment support.  We can't use the alignX classes above
+   since they do unwanted things with caption and other styling. */
+table.right {
+ margin-left: auto;
+ margin-right: 0;
+}
+table.center {
+ margin-left: auto;
+ margin-right: auto;
+}
+table.left {
+ margin-left: 0;
+ margin-right: auto;
+}
+
+/* Give the table caption label the same styling as the figcaption */
+caption a[href] {
+  color: #222;
+}
+
+@media print {
+  .toplink {
+    display: none;
+  }
+
+  /* avoid overwriting the top border line with the ToC header */
+  #toc {
+    padding-top: 1px;
+  }
+
+  /* Avoid page breaks inside dl and author address entries */
+  .vcard {
+    page-break-inside: avoid;
+  }
+
+}
+/* Tweak the bcp14 keyword presentation */
+.bcp14 {
+  font-variant: small-caps;
+  font-weight: bold;
+  font-size: 0.9em;
+}
+/* Tweak the invisible space above H* in order not to overlay links in text above */
+ h2 {
+  margin-top: -18px;  /* provide offset for in-page anchors */
+  padding-top: 31px;
+ }
+ h3 {
+  margin-top: -18px;  /* provide offset for in-page anchors */
+  padding-top: 24px;
+ }
+ h4 {
+  margin-top: -18px;  /* provide offset for in-page anchors */
+  padding-top: 24px;
+ }
+/* Float artwork pilcrow to the right */
+@media screen {
+  .artwork a.pilcrow {
+    display: block;
+    line-height: 0.7;
+    margin-top: 0.15em;
+  }
+}
+/* Make pilcrows on dd visible */
+@media screen {
+  dd:hover > a.pilcrow {
+    visibility: visible;
+  }
+}
+/* Make the placement of figcaption match that of a table's caption
+   by removing the figure's added bottom margin */
+.alignLeft.art-text,
+.alignCenter.art-text,
+.alignRight.art-text {
+   margin-bottom: 0;
+}
+.alignLeft,
+.alignCenter,
+.alignRight {
+  margin: 1em 0 0 0;
+}
+/* In print, the pilcrow won't show on hover, so prevent it from taking up space,
+   possibly even requiring a new line */
+@media print {
+  a.pilcrow {
+    display: none;
+  }
+}
+/* Styling for the external metadata */
+div#external-metadata {
+  background-color: #eee;
+  padding: 0.5em;
+  margin-bottom: 0.5em;
+  display: none;
+}
+div#internal-metadata {
+  padding: 0.5em;                       /* to match the external-metadata padding */
+}
+/* Styling for title RFC Number */
+h1#rfcnum {
+  clear: both;
+  margin: 0 0 -1em;
+  padding: 1em 0 0 0;
+}
+/* Make .olPercent look the same as <ol><li> */
+dl.olPercent > dd {
+  margin-bottom: 0.25em;
+  min-height: initial;
+}
+/* Give aside some styling to set it apart */
+aside {
+  border-left: 1px solid #ddd;
+  margin: 1em 0 1em 2em;
+  padding: 0.2em 2em;
+}
+aside > dl,
+aside > ol,
+aside > ul,
+aside > table,
+aside > p {
+  margin-bottom: 0.5em;
+}
+/* Additional page break settings */
+@media print {
+  figcaption, table caption {
+    page-break-before: avoid;
+  }
+}
+/* Font size adjustments for print */
+@media print {
+  body  { font-size: 10pt;      line-height: normal; max-width: 96%; }
+  h1    { font-size: 1.72em;    padding-top: 1.5em; } /* 1*1.2*1.2*1.2 */
+  h2    { font-size: 1.44em;    padding-top: 1.5em; } /* 1*1.2*1.2 */
+  h3    { font-size: 1.2em;     padding-top: 1.5em; } /* 1*1.2 */
+  h4    { font-size: 1em;       padding-top: 1.5em; }
+  h5, h6 { font-size: 1em;      margin: initial; padding: 0.5em 0 0.3em; }
+}
+/* Sourcecode margin in print, when there's no pilcrow */
+@media print {
+  .artwork,
+  .artwork > pre,
+  .sourcecode {
+    margin-bottom: 1em;
+  }
+}
+/* Avoid narrow tables forcing too narrow table captions, which may render badly */
+table {
+  min-width: 20em;
+}
+/* ol type a */
+ol.type-a { list-style-type: lower-alpha; }
+ol.type-A { list-style-type: upper-alpha; }
+ol.type-i { list-style-type: lower-roman; }
+ol.type-I { list-style-type: lower-roman; }
+/* Apply the print table and row borders in general, on request from the RPC,
+and increase the contrast between border and odd row background slightly */
+table {
+  border: 1px solid #ddd;
+}
+td {
+  border-top: 1px solid #ddd;
+}
+tr {
+  break-inside: avoid;
+}
+tr:nth-child(2n+1) > td {
+  background-color: #f8f8f8;
+}
+/* Use style rules to govern display of the TOC. */
+@media screen and (max-width: 1023px) {
+  #toc nav { display: none; }
+  #toc.active nav { display: block; }
+}
+/* Add support for keepWithNext */
+.keepWithNext {
+  break-after: avoid-page;
+  break-after: avoid-page;
+}
+/* Add support for keepWithPrevious */
+.keepWithPrevious {
+  break-before: avoid-page;
+}
+/* Change the approach to avoiding breaks inside artwork etc. */
+figure, pre, table, .artwork, .sourcecode  {
+  break-before: auto;
+  break-after: auto;
+}
+/* Avoid breaks between <dt> and <dd> */
+dl {
+  break-before: auto;
+  break-inside: auto;
+}
+dt {
+  break-before: auto;
+  break-after: avoid-page;
+}
+dd {
+  break-before: avoid-page;
+  break-after: auto;
+  orphans: 3;
+  widows: 3
+}
+span.break, dd.break {
+  margin-bottom: 0;
+  min-height: 0;
+  break-before: auto;
+  break-inside: auto;
+  break-after: auto;
+}
+/* Undo break-before ToC */
+@media print {
+  #toc {
+    break-before: auto;
+  }
+}
+/* Text in compact lists should not get extra bottom margin space,
+   since that would makes the list not compact */
+ul.compact p, .ulCompact p,
+ol.compact p, .olCompact p {
+ margin: 0;
+}
+/* But the list as a whole needs the extra space at the end */
+section ul.compact,
+section .ulCompact,
+section ol.compact,
+section .olCompact {
+  margin-bottom: 1em;                    /* same as p not within ul.compact etc. */
+}
+/* The tt and code background above interferes with for instance table cell
+   backgrounds.  Changed to something a bit more selective. */
+tt, code {
+  background-color: transparent;
+}
+p tt, p code, li tt, li code {
+  background-color: #f8f8f8;
+}
+/* Tweak the pre margin -- 0px doesn't come out well */
+pre {
+   margin-top: 0.5px;
+}
+/* Tweak the compact list text */
+ul.compact, .ulCompact,
+ol.compact, .olCompact,
+dl.compact, .dlCompact {
+  line-height: normal;
+}
+/* Don't add top margin for nested lists */
+li > ul, li > ol, li > dl,
+dd > ul, dd > ol, dd > dl,
+dl > dd > dl {
+  margin-top: initial;
+}
+/* Elements that should not be rendered on the same line as a <dt> */
+/* This should match the element list in writer.text.TextWriter.render_dl() */
+dd > div.artwork:first-child,
+dd > aside:first-child,
+dd > figure:first-child,
+dd > ol:first-child,
+dd > div.sourcecode:first-child,
+dd > table:first-child,
+dd > ul:first-child {
+  clear: left;
+}
+/* fix for weird browser behaviour when <dd/> is empty */
+dt+dd:empty::before{
+  content: "\00a0";
+}
+/* Make paragraph spacing inside <li> smaller than in body text, to fit better within the list */
+li > p {
+  margin-bottom: 0.5em
+}
+/* Don't let p margin spill out from inside list items */
+li > p:last-of-type:only-child {
+  margin-bottom: 0;
+}
+</style>
+<link href="rfc-local.css" rel="stylesheet" type="text/css">
+</head>
+<body class="xml2rfc">
+<script src="metadata.min.js"></script>
+<table class="ears">
+<thead><tr>
+<td class="left">Internet-Draft</td>
+<td class="center">Secure Delegation Management for RPP</td>
+<td class="right">April 2026</td>
+</tr></thead>
+<tfoot><tr>
+<td class="left">Wullink &amp; Kowalik</td>
+<td class="center">Expires 1 November 2026</td>
+<td class="right">[Page]</td>
+</tr></tfoot>
+</table>
+<div id="external-metadata" class="document-information"></div>
+<div id="internal-metadata" class="document-information">
+<dl id="identifiers">
+<dt class="label-workgroup">Workgroup:</dt>
+<dd class="workgroup">Network Working Group</dd>
+<dt class="label-internet-draft">Internet-Draft:</dt>
+<dd class="internet-draft">draft-wullink-rpp-oauth2-delegation-00</dd>
+<dt class="label-published">Published:</dt>
+<dd class="published">
+<time datetime="2026-04-30" class="published">30 April 2026</time>
+    </dd>
+<dt class="label-intended-status">Intended Status:</dt>
+<dd class="intended-status">Standards Track</dd>
+<dt class="label-expires">Expires:</dt>
+<dd class="expires"><time datetime="2026-11-01">1 November 2026</time></dd>
+<dt class="label-authors">Authors:</dt>
+<dd class="authors">
+<div class="author">
+      <div class="author-name">M. Wullink</div>
+<div class="org">SIDN Labs</div>
+</div>
+<div class="author">
+      <div class="author-name">P. Kowalik</div>
+<div class="org">DENIC</div>
+</div>
+</dd>
+</dl>
+</div>
+<h1 id="title">Secure Delegation Management for RESTful Provisioning Protocol (RPP)</h1>
+<section id="section-abstract">
+      <h2 id="abstract"><a href="#abstract" class="selfRef">Abstract</a></h2>
+<p id="section-abstract-1">This document describes how OAuth 2.0 <span>[<a href="#RFC6749" class="cite xref">RFC6749</a>]</span> can be used to allow a third party, such as a DNS Operator, to manage delegation (name server) details for a domain in the registry database on behalf of the registrant. It extends the RPP OAuth 2.0 authorization model defined in <span>[<a href="#I-D.wullink-rpp-oauth2" class="cite xref">I-D.wullink-rpp-oauth2</a>]</span> with mechanisms specific to third-party delegation management via the RESTful Provisioning Protocol (RPP) <span>[<a href="#I-D.wullink-rpp-core" class="cite xref">I-D.wullink-rpp-core</a>]</span>.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
+</section>
+<div id="status-of-memo">
+<section id="section-boilerplate.1">
+        <h2 id="name-status-of-this-memo">
+<a href="#name-status-of-this-memo" class="section-name selfRef">Status of This Memo</a>
+        </h2>
+<p id="section-boilerplate.1-1">
+        This Internet-Draft is submitted in full conformance with the
+        provisions of BCP 78 and BCP 79.<a href="#section-boilerplate.1-1" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.1-2">
+        Internet-Drafts are working documents of the Internet Engineering Task
+        Force (IETF). Note that other groups may also distribute working
+        documents as Internet-Drafts. The list of current Internet-Drafts is
+        at <span><a href="https://datatracker.ietf.org/drafts/current/">https://datatracker.ietf.org/drafts/current/</a></span>.<a href="#section-boilerplate.1-2" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.1-3">
+        Internet-Drafts are draft documents valid for a maximum of six months
+        and may be updated, replaced, or obsoleted by other documents at any
+        time. It is inappropriate to use Internet-Drafts as reference
+        material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.1-4">
+        This Internet-Draft will expire on 1 November 2026.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="copyright">
+<section id="section-boilerplate.2">
+        <h2 id="name-copyright-notice">
+<a href="#name-copyright-notice" class="section-name selfRef">Copyright Notice</a>
+        </h2>
+<p id="section-boilerplate.2-1">
+            Copyright (c) 2026 IETF Trust and the persons identified as the
+            document authors. All rights reserved.<a href="#section-boilerplate.2-1" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<span><a href="https://trustee.ietf.org/license-info">https://trustee.ietf.org/license-info</a></span>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document. Code Components extracted from this
+            document must include Revised BSD License text as described in
+            Section 4.e of the Trust Legal Provisions and are provided without
+            warranty as described in the Revised BSD License.<a href="#section-boilerplate.2-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="toc">
+<section id="section-toc.1">
+        <a href="#" onclick="scroll(0,0)" class="toplink">▲</a><h2 id="name-table-of-contents">
+<a href="#name-table-of-contents" class="section-name selfRef">Table of Contents</a>
+        </h2>
+<nav class="toc"><ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1">
+            <p id="section-toc.1-1.1.1" class="keepWithNext"><a href="#section-1" class="auto internal xref">1</a>.  <a href="#name-introduction" class="internal xref">Introduction</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.2">
+            <p id="section-toc.1-1.2.1" class="keepWithNext"><a href="#section-2" class="auto internal xref">2</a>.  <a href="#name-terminology" class="internal xref">Terminology</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3">
+            <p id="section-toc.1-1.3.1" class="keepWithNext"><a href="#section-3" class="auto internal xref">3</a>.  <a href="#name-conventions-used-in-this-do" class="internal xref">Conventions Used in This Document</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4">
+            <p id="section-toc.1-1.4.1"><a href="#section-4" class="auto internal xref">4</a>.  <a href="#name-use-case" class="internal xref">Use Case</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5">
+            <p id="section-toc.1-1.5.1"><a href="#section-5" class="auto internal xref">5</a>.  <a href="#name-authorization-request-detai" class="internal xref">Authorization Request Details</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6">
+            <p id="section-toc.1-1.6.1"><a href="#section-6" class="auto internal xref">6</a>.  <a href="#name-scopes" class="internal xref">Scopes</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7">
+            <p id="section-toc.1-1.7.1"><a href="#section-7" class="auto internal xref">7</a>.  <a href="#name-claims" class="internal xref">Claims</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.1">
+                <p id="section-toc.1-1.7.2.1.1"><a href="#section-7.1" class="auto internal xref">7.1</a>.  <a href="#name-rpp-specific-claims" class="internal xref">RPP-Specific Claims</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8">
+            <p id="section-toc.1-1.8.1"><a href="#section-8" class="auto internal xref">8</a>.  <a href="#name-trust-model" class="internal xref">Trust Model</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9">
+            <p id="section-toc.1-1.9.1"><a href="#section-9" class="auto internal xref">9</a>.  <a href="#name-delegation-management-flow" class="internal xref">Delegation Management Flow</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10">
+            <p id="section-toc.1-1.10.1"><a href="#section-10" class="auto internal xref">10</a>. <a href="#name-data-objects" class="internal xref">Data Objects</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11">
+            <p id="section-toc.1-1.11.1"><a href="#section-11" class="auto internal xref">11</a>. <a href="#name-endpoints" class="internal xref">Endpoints</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.12">
+            <p id="section-toc.1-1.12.1"><a href="#section-12" class="auto internal xref">12</a>. <a href="#name-iana-considerations" class="internal xref">IANA Considerations</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.13">
+            <p id="section-toc.1-1.13.1"><a href="#section-13" class="auto internal xref">13</a>. <a href="#name-internationalization-consid" class="internal xref">Internationalization Considerations</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.14">
+            <p id="section-toc.1-1.14.1"><a href="#section-14" class="auto internal xref">14</a>. <a href="#name-security-considerations" class="internal xref">Security Considerations</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.15">
+            <p id="section-toc.1-1.15.1"><a href="#section-15" class="auto internal xref">15</a>. <a href="#name-change-history" class="internal xref">Change History</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.15.2.1">
+                <p id="section-toc.1-1.15.2.1.1"><a href="#section-15.1" class="auto internal xref">15.1</a>.  <a href="#name-version-00" class="internal xref">Version 00</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.16">
+            <p id="section-toc.1-1.16.1"><a href="#section-16" class="auto internal xref">16</a>. <a href="#name-normative-references" class="internal xref">Normative References</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.17">
+            <p id="section-toc.1-1.17.1"><a href="#appendix-A" class="auto internal xref"></a><a href="#name-acknowledgements" class="internal xref">Acknowledgements</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.18">
+            <p id="section-toc.1-1.18.1"><a href="#appendix-B" class="auto internal xref"></a><a href="#name-authors-addresses" class="internal xref">Authors' Addresses</a></p>
+</li>
+        </ul>
+</nav>
+</section>
+</div>
+<div id="introduction">
+<section id="section-1">
+      <h2 id="name-introduction">
+<a href="#section-1" class="section-number selfRef">1. </a><a href="#name-introduction" class="section-name selfRef">Introduction</a>
+      </h2>
+<p id="section-1-1"><strong>NOTE:</strong> This is a very early draft of how third-party delegation management could work in RPP. It is added here to provide a picture of the delegation flow and to facilitate discussion of the details and the security mechanisms that can be used to secure it. This document is expected to be significantly revised and updated as the delegation management flow and the security mechanisms are further developed and refined.<a href="#section-1-1" class="pilcrow">¶</a></p>
+<p id="section-1-2">In the domain name system, delegation refers to the assignment of name servers responsible for a DNS zone. The registry holds authoritative delegation data — the name server (NS) records and associated glue records — for each domain in its database. Ordinarily only the sponsoring registrar, acting on behalf of the registrant, may update this data via the RPP API.<a href="#section-1-2" class="pilcrow">¶</a></p>
+<p id="section-1-3">An increasingly common operational pattern is for a registrant to host their DNS with a dedicated DNS Operator that is not the sponsoring registrar. When the registrant wants the DNS Operator to manage their delegation settings — for example, to update name servers automatically — it is inconvenient and error-prone to require the registrant to relay every change through their registrar. Instead, the registrant should be able to grant the DNS Operator limited, revocable authority to update delegation data directly at the registry.<a href="#section-1-3" class="pilcrow">¶</a></p>
+<p id="section-1-4">This document defines a mechanism based on OAuth 2.0 federation that enables this pattern securely and without any bilateral arrangement between the DNS Operator and the registrar. The registrant authenticates at the registrar's Authorization Server (AS) and grants explicit, domain-scoped consent for the DNS Operator to manage delegation data. The registrar's AS issues a signed JWT that the DNS Operator presents to the registry when submitting delegation update requests. The registry validates the token locally using the registrar's AS public key, which was registered during registrar accreditation, and authorises the update if the token is valid.<a href="#section-1-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="terminology">
+<section id="section-2">
+      <h2 id="name-terminology">
+<a href="#section-2" class="section-number selfRef">2. </a><a href="#name-terminology" class="section-name selfRef">Terminology</a>
+      </h2>
+<p id="section-2-1">In this document the following terminology is used.<a href="#section-2-1" class="pilcrow">¶</a></p>
+<p id="section-2-2">REST - Representational State Transfer (<span>[<a href="#REST" class="cite xref">REST</a>]</span>). An architectural style.<a href="#section-2-2" class="pilcrow">¶</a></p>
+<p id="section-2-3">RESTful - A RESTful web service is a web service or API implemented using HTTP and the principles of <span>[<a href="#REST" class="cite xref">REST</a>]</span>.<a href="#section-2-3" class="pilcrow">¶</a></p>
+<p id="section-2-4">RESTful Provisioning Protocol or RPP - The protocol described in this document.<a href="#section-2-4" class="pilcrow">¶</a></p>
+<p id="section-2-5">URL - A Uniform Resource Locator as defined in <span>[<a href="#RFC3986" class="cite xref">RFC3986</a>]</span>.<a href="#section-2-5" class="pilcrow">¶</a></p>
+<p id="section-2-6">Resource - An object having a type, data, and possible relationship to other resources, identified by a URL.<a href="#section-2-6" class="pilcrow">¶</a></p>
+<p id="section-2-7">RPP client - An HTTP user agent performing an RPP request.<a href="#section-2-7" class="pilcrow">¶</a></p>
+<p id="section-2-8">RPP server - An HTTP server responsible for processing requests and returning results in any supported media type.<a href="#section-2-8" class="pilcrow">¶</a></p>
+<p id="section-2-9">JWT - JSON Web Token as defined in <span>[<a href="#RFC7519" class="cite xref">RFC7519</a>]</span>.<a href="#section-2-9" class="pilcrow">¶</a></p>
+<p id="section-2-10">Registrant - The holder of a registered domain name, who has an account at the sponsoring registrar.<a href="#section-2-10" class="pilcrow">¶</a></p>
+<p id="section-2-11">Registrar - The accredited sponsoring registrar for a domain. The registrar operates an Authorization Server and maintains registrant accounts.<a href="#section-2-11" class="pilcrow">¶</a></p>
+<p id="section-2-12">Registry - The authoritative operator of the top-level domain, operating the RPP server. The registry stores delegation data and validates access tokens.<a href="#section-2-12" class="pilcrow">¶</a></p>
+<p id="section-2-13">DNS Operator - A third party (not the registrar) that manages DNS zones on behalf of registrants. The registrant has an account at the DNS Operator. The DNS Operator uses the RPP API to update delegation data at the registry.<a href="#section-2-13" class="pilcrow">¶</a></p>
+<p id="section-2-14">Authorization Server (AS) - An OAuth 2.0 authorization server, operated by the registrar, that authenticates registrants and issues access tokens authorizing third parties to act on their behalf.<a href="#section-2-14" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="conventions-used-in-this-document">
+<section id="section-3">
+      <h2 id="name-conventions-used-in-this-do">
+<a href="#section-3" class="section-number selfRef">3. </a><a href="#name-conventions-used-in-this-do" class="section-name selfRef">Conventions Used in This Document</a>
+      </h2>
+<p id="section-3-1">The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT","SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in <span>[<a href="#RFC2119" class="cite xref">RFC2119</a>]</span>.<a href="#section-3-1" class="pilcrow">¶</a></p>
+<p id="section-3-2">In examples, indentation and white space in examples are provided only to illustrate element relationships and are not REQUIRED features of the protocol.<a href="#section-3-2" class="pilcrow">¶</a></p>
+<p id="section-3-3">All example requests assume an RPP server using HTTP version 2 is listening on the standard HTTPS port on host rpp.example. An authorization token has been provided by an out of band process and MUST be used by the client to authenticate each request.<a href="#section-3-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="use-case">
+<section id="section-4">
+      <h2 id="name-use-case">
+<a href="#section-4" class="section-number selfRef">4. </a><a href="#name-use-case" class="section-name selfRef">Use Case</a>
+      </h2>
+<p id="section-4-1">A registrant (<code>alice@example.com</code>) has registered <code>foo.example</code> through Registrar A. She has also signed up with DNS Operator B to host her DNS zones. She wants DNS Operator B to be able to update the name servers for <code>foo.example</code> in the registry database without having to route every change through Registrar A.<a href="#section-4-1" class="pilcrow">¶</a></p>
+<p id="section-4-2">The desired outcome is:<a href="#section-4-2" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="compact type-1" id="section-4-3">
+<li id="section-4-3.1">DNS Operator B can update delegation data (name servers and glue records) for <code>foo.example</code> at the registry directly.<a href="#section-4-3.1" class="pilcrow">¶</a>
+</li>
+        <li id="section-4-3.2">The authority is scoped to delegation management only — DNS Operator B cannot modify registrant contact data, initiate transfers, or perform any other operation.<a href="#section-4-3.2" class="pilcrow">¶</a>
+</li>
+        <li id="section-4-3.3">The authority is granted explicitly by the registrant via an interactive OAuth 2.0 flow at Registrar A's AS.<a href="#section-4-3.3" class="pilcrow">¶</a>
+</li>
+        <li id="section-4-3.4">The registry can verify the authority independently, without contacting Registrar A at request time.<a href="#section-4-3.4" class="pilcrow">¶</a>
+</li>
+        <li id="section-4-3.5">The authority can be revoked by the registrant at any time, at which point the registry will no longer accept tokens issued for DNS Operator B.<a href="#section-4-3.5" class="pilcrow">¶</a>
+</li>
+      </ol>
+</section>
+</div>
+<div id="authorization-request-details">
+<section id="section-5">
+      <h2 id="name-authorization-request-detai">
+<a href="#section-5" class="section-number selfRef">5. </a><a href="#name-authorization-request-detai" class="section-name selfRef">Authorization Request Details</a>
+      </h2>
+<p id="section-5-1">OAuth 2.0 Rich Authorization Requests (RAR) <span>[<a href="#RFC9396" class="cite xref">RFC9396</a>]</span> extends the standard OAuth 2.0 authorization request with an <code>authorization_details</code> parameter that carries a structured JSON object describing precisely what the client is requesting authorization for. Unlike scopes, which are coarse-grained string tokens, <code>authorization_details</code> allows the request to include typed, fine-grained authorization data, such as the specific domain name whose delegation data is to be managed. The AS can present this information to the registrant in a meaningful consent screen.<a href="#section-5-1" class="pilcrow">¶</a></p>
+<p id="section-5-2">For the delegation management flow, the DNS Operator includes an <code>authorization_details</code> object of type <code>rpp_delegation</code> in the authorization request to the registrar's AS. The registrant sees exactly which domain they are consenting to allow the DNS Operator to manage. The AS MUST echo the <code>authorization_details</code> object back as a claim in the issued JWT, giving the registry verifiable, tamper-proof evidence of what was authorized and for which domain.<a href="#section-5-2" class="pilcrow">¶</a></p>
+<p id="section-5-3">The <code>type</code> field MUST be set to <code>rpp_delegation</code>. Table <a href="#tbl-rar" class="auto internal xref">Table 1</a> lists the RAR fields defined for RPP delegation management.<a href="#section-5-3" class="pilcrow">¶</a></p>
+<span id="name-rpp-delegation-authorizatio"></span><div id="tbl-rar">
+<table class="center" id="table-1">
+        <caption>
+<a href="#table-1" class="selfRef">Table 1</a>:
+<a href="#name-rpp-delegation-authorizatio" class="selfRef">RPP Delegation Authorization, RAR <code>authorization_details</code> object (<em class="cite xref">[RFC9396]</em>)</a>
+        </caption>
+<thead>
+          <tr>
+            <th class="text-left" rowspan="1" colspan="1">Field</th>
+            <th class="text-left" rowspan="1" colspan="1">Type</th>
+            <th class="text-left" rowspan="1" colspan="1">Requirement</th>
+            <th class="text-left" rowspan="1" colspan="1">Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">
+              <code>type</code>
+</td>
+            <td class="text-left" rowspan="1" colspan="1">String</td>
+            <td class="text-left" rowspan="1" colspan="1">REQUIRED</td>
+            <td class="text-left" rowspan="1" colspan="1">MUST be <code>rpp_delegation</code>.</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">
+              <code>object_type</code>
+</td>
+            <td class="text-left" rowspan="1" colspan="1">String</td>
+            <td class="text-left" rowspan="1" colspan="1">REQUIRED</td>
+            <td class="text-left" rowspan="1" colspan="1">The RPP object type whose delegation data is to be managed. MUST be <code>domain</code>.</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">
+              <code>object_identifier</code>
+</td>
+            <td class="text-left" rowspan="1" colspan="1">String</td>
+            <td class="text-left" rowspan="1" colspan="1">REQUIRED</td>
+            <td class="text-left" rowspan="1" colspan="1">The fully qualified domain name whose delegation data is to be managed (e.g., <code>foo.example</code>).</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">
+              <code>actions</code>
+</td>
+            <td class="text-left" rowspan="1" colspan="1">Array of Strings</td>
+            <td class="text-left" rowspan="1" colspan="1">REQUIRED</td>
+            <td class="text-left" rowspan="1" colspan="1">The set of permitted delegation management actions. MUST contain one or more of: <code>read</code>, <code>update</code>.</td>
+          </tr>
+        </tbody>
+      </table>
+</div>
+<p id="section-5-5">Example RAR <code>authorization_details</code> value for managing delegation of <code>foo.example</code>:<a href="#section-5-5" class="pilcrow">¶</a></p>
+<div class="lang-json sourcecode" id="section-5-6">
+<pre>[{
+  "type": "rpp_delegation",
+  "object_type": "domain",
+  "object_identifier": "foo.example",
+  "actions": ["read", "update"]
+}]
+
+</pre><a href="#section-5-6" class="pilcrow">¶</a>
+</div>
+<p id="section-5-7">The registrar's AS MUST echo the <code>authorization_details</code> back as a claim in the issued JWT. The registry MUST validate the <code>authorization_details</code> claim in the token and MUST verify that <code>object_type</code> and <code>object_identifier</code> match the domain whose delegation data is being updated.<a href="#section-5-7" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="scopes">
+<section id="section-6">
+      <h2 id="name-scopes">
+<a href="#section-6" class="section-number selfRef">6. </a><a href="#name-scopes" class="section-name selfRef">Scopes</a>
+      </h2>
+<p id="section-6-1">RPP OAuth 2.0 scopes are defined in <span>[<a href="#I-D.wullink-rpp-oauth2" class="cite xref">I-D.wullink-rpp-oauth2</a>]</span>. Delegation management uses the <code>domain:delegation:write</code> scope. This scope grants the bearer the right to update delegation data (name servers and glue records) for a specific domain, as further constrained by the <code>authorization_details</code> claim.<a href="#section-6-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="claims">
+<section id="section-7">
+      <h2 id="name-claims">
+<a href="#section-7" class="section-number selfRef">7. </a><a href="#name-claims" class="section-name selfRef">Claims</a>
+      </h2>
+<p id="section-7-1">RPP access tokens MUST conform to the JWT Profile for OAuth 2.0 Access Tokens defined in <span>[<a href="#RFC9068" class="cite xref">RFC9068</a>]</span>. This profile establishes a standardized set of claims that RPP uses to make authorization decisions consistently across implementations and identity providers.<a href="#section-7-1" class="pilcrow">¶</a></p>
+<div id="rpp-specific-claims">
+<section id="section-7.1">
+        <h3 id="name-rpp-specific-claims">
+<a href="#section-7.1" class="section-number selfRef">7.1. </a><a href="#name-rpp-specific-claims" class="section-name selfRef">RPP-Specific Claims</a>
+        </h3>
+<p id="section-7.1-1">In addition to the standard <span>[<a href="#RFC9068" class="cite xref">RFC9068</a>]</span> claims, table <a href="#tbl-rpp-claims" class="auto internal xref">Table 2</a> lists the RPP-specific claims relevant to delegation management. Required claims MUST be present in every RPP delegation access token. Optional claims SHOULD be included when applicable.<a href="#section-7.1-1" class="pilcrow">¶</a></p>
+<span id="name-rpp-delegation-access-token"></span><div id="tbl-rpp-claims">
+<table class="center" id="table-2">
+          <caption>
+<a href="#table-2" class="selfRef">Table 2</a>:
+<a href="#name-rpp-delegation-access-token" class="selfRef">RPP Delegation Access Token Claims</a>
+          </caption>
+<thead>
+            <tr>
+              <th class="text-left" rowspan="1" colspan="1">Claim</th>
+              <th class="text-left" rowspan="1" colspan="1">Requirement</th>
+              <th class="text-left" rowspan="1" colspan="1">Type</th>
+              <th class="text-left" rowspan="1" colspan="1">Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>rpp_object_id</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">OPTIONAL</td>
+              <td class="text-left" rowspan="1" colspan="1">String</td>
+              <td class="text-left" rowspan="1" colspan="1">The domain name whose delegation data may be managed. MUST be present when the <code>authorization_details</code> claim is not present. The value MUST be the fully qualified domain name (e.g., <code>foo.example</code>). The RPP server MUST validate that this value matches the domain in the update request. This claim MUST NOT be present when <code>authorization_details</code> is present.</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>authorization_details</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">REQUIRED</td>
+              <td class="text-left" rowspan="1" colspan="1">Array of Objects</td>
+              <td class="text-left" rowspan="1" colspan="1">Rich authorization details as defined by <span>[<a href="#RFC9396" class="cite xref">RFC9396</a>]</span>. MUST be present in access tokens for the delegation management flow when RAR is used. Each object in the array MUST have a <code>type</code> field set to <code>rpp_delegation</code> and MUST include <code>object_type</code>, <code>object_identifier</code>, and <code>actions</code> fields (see <a href="#tbl-rar" class="auto internal xref">Table 1</a>). The RPP server MUST validate that <code>object_type</code> and <code>object_identifier</code> match the domain in the update request, and that <code>actions</code> contains <code>update</code>.</td>
+            </tr>
+          </tbody>
+        </table>
+</div>
+</section>
+</div>
+</section>
+</div>
+<div id="trust-model">
+<section id="section-8">
+      <h2 id="name-trust-model">
+<a href="#section-8" class="section-number selfRef">8. </a><a href="#name-trust-model" class="section-name selfRef">Trust Model</a>
+      </h2>
+<p id="section-8-1">The delegation management mechanism uses the registry as the central trust anchor, operating as a hub-and-spoke topology. Registrars establish a trust relationship with the registry during accreditation. DNS Operators MUST also be pre-registered with the registry in order to obtain access to the RPP API. This pre-registration is necessary to look up the sponsoring registrar's AS URI for a domain and to submit delegation update requests. No bilateral arrangement between the DNS Operator and the registrar is required; all delegation authority flows through the registrant's explicit consent at the registrar's AS.<a href="#section-8-1" class="pilcrow">¶</a></p>
+<p id="section-8-2"><strong>Registry as trust anchor.</strong> As part of registrar onboarding, each registrar that operates its own AS (i.e., maintains registrant accounts) MUST register its AS metadata with the registry. This includes at minimum:<a href="#section-8-2" class="pilcrow">¶</a></p>
+<ul class="compact">
+<li class="compact" id="section-8-3.1">The AS's authorization endpoint URI, used by the DNS Operator to construct the consent redirect.<a href="#section-8-3.1" class="pilcrow">¶</a>
+</li>
+        <li class="compact" id="section-8-3.2">The AS's JWKS endpoint URI or the public key material itself, used by the registry to validate tokens issued by that AS.<a href="#section-8-3.2" class="pilcrow">¶</a>
+</li>
+      </ul>
+<p id="section-8-4">The registry stores this metadata as part of the registrar's profile and makes it available via the discovery mechanism.<a href="#section-8-4" class="pilcrow">¶</a></p>
+<p id="section-8-5"><strong>Token validation without bilateral trust.</strong> When the registry receives a delegation update request carrying a JWT issued by the registrar's AS, it validates the token locally using the registrar's AS public key that was registered at onboarding. No runtime call to the registrar or its AS is required. The registry already trusts that public key because it was registered through the accreditation process.<a href="#section-8-5" class="pilcrow">¶</a></p>
+<p id="section-8-6"><strong>DNS Operator.</strong> The DNS Operator MUST be pre-registered with the registry to gain access to the RPP API. This pre-registration grants the DNS Operator the credentials necessary to query the registry's discovery endpoint (to look up the sponsoring registrar's AS URI for a given domain) and to submit delegation update requests on behalf of a registrant. The DNS Operator does not require any pre-existing relationship with the registrar; the only registrar-side requirement is that the registrar's AS accepts the DNS Operator's <code>redirect_uri</code> as a valid OAuth 2.0 client redirect URI.<a href="#section-8-6" class="pilcrow">¶</a></p>
+<p id="section-8-7"><strong>Security properties.</strong> This model provides the following guarantees:<a href="#section-8-7" class="pilcrow">¶</a></p>
+<ul class="compact">
+<li class="compact" id="section-8-8.1">A rogue DNS Operator cannot forge a delegation token that the registry will accept, because only the legitimate registrar's AS public key (registered at onboarding) can produce a valid signature.<a href="#section-8-8.1" class="pilcrow">¶</a>
+</li>
+        <li class="compact" id="section-8-8.2">The DNS Operator cannot forge registrant consent, because the token is issued by the registrar's AS after the registrant has authenticated and approved the scope.<a href="#section-8-8.2" class="pilcrow">¶</a>
+</li>
+        <li class="compact" id="section-8-8.3">The registry controls the set of trusted ASs by controlling which registrar AS metadata it accepts at onboarding.<a href="#section-8-8.3" class="pilcrow">¶</a>
+</li>
+        <li class="compact" id="section-8-8.4">DNS Operators need no knowledge of registrar internals beyond what the registry exposes via the discovery endpoint. DNS Operators do require pre-registration with the registry to access the RPP API, but require no bilateral arrangement with any individual registrar.<a href="#section-8-8.4" class="pilcrow">¶</a>
+</li>
+        <li class="compact" id="section-8-8.5">Tokens are scoped to a single domain and a specific set of actions, limiting the blast radius of a compromised token.<a href="#section-8-8.5" class="pilcrow">¶</a>
+</li>
+      </ul>
+<p id="section-8-9">The following diagram shows how AS URIs and public keys flow through the registry and how the DNS Operator uses them to redirect the registrant's browser:<a href="#section-8-9" class="pilcrow">¶</a></p>
+<span id="name-rpp-delegation-trust-model-"></span><figure id="figure-1">
+        <div class="lang-ascii sourcecode" id="section-8-10.1">
+<pre>  DNS Operator         Registry           Registrar
+                     (Trust Anchor)
+     |                    |                    |
+     : --- Onboarding --------------------------:
+     |                    |                    |
+     |                    | Register AS        |
+     |                    | URI + JWKS pubkey  |
+     |                    |&lt;-------------------|
+     |                    |                    |
+     : --- Delegation management time --------- :
+     |                    |                    |
+     | Discover Registrar |                    |
+     | AS URI for domain  |                    |
+     +-------------------&gt;|                    |
+     |                    |                    |
+     | AS URI returned    |                    |
+     |&lt;-------------------|                    |
+     |                    |                    |
+     | Redirect registrant's browser           |
+     | to Registrar AS                         |
+     +----------------------------------------&gt;|
+     |                    |                    |
+     | Auth code returned via browser redirect |
+     |&lt;----------------------------------------|
+     |                    |                    |
+     | Exchange auth code |                    |
+     | for access token   |                    |
+     | (back-channel)     |                    |
+     +----------------------------------------&gt;|
+     |                    |                    |
+     | JWT (signed by     |                    |
+     | Registrar AS)      |                    |
+     |&lt;----------------------------------------|
+     |                    |                    |
+     | Delegation update  |                    |
+     | request + Bearer   |                    |
+     | JWT                |                    |
+     +-------------------&gt;|                    |
+     |                    |                    |
+     |                    | Validate JWT using |
+     |                    | cached Registrar   |
+     |                    | JWKS pubkey        |
+     |                    | (no runtime call)  |
+     |                    |                    |
+     | Update result      |                    |
+     |&lt;-------------------|                    |
+     |                    |                    |
+
+</pre>
+</div>
+<figcaption><a href="#figure-1" class="selfRef">Figure 1</a>:
+<a href="#name-rpp-delegation-trust-model-" class="selfRef">RPP Delegation Trust Model — Onboarding, Discovery, and Token Flow</a>
+        </figcaption></figure>
+</section>
+</div>
+<div id="delegation-management-flow">
+<section id="section-9">
+      <h2 id="name-delegation-management-flow">
+<a href="#section-9" class="section-number selfRef">9. </a><a href="#name-delegation-management-flow" class="section-name selfRef">Delegation Management Flow</a>
+      </h2>
+<p id="section-9-1">The delegation management flow uses the OAuth 2.0 Authorization Code grant <a href="https://rfc-editor.org/rfc/rfc6749#appendix-Section%204.1" class="relref">Section 4.1</a> to obtain explicit, domain-scoped registrant consent directly from the registrar's AS. The primary method for conveying the authorization scope is Rich Authorization Requests (RAR) <span>[<a href="#RFC9396" class="cite xref">RFC9396</a>]</span>.<a href="#section-9-1" class="pilcrow">¶</a></p>
+<p id="section-9-2">Before redirecting the registrant, the DNS Operator MUST first query the registry's discovery endpoint to resolve the sponsoring registrar's AS authorization URI for the domain. The sponsoring registrar is identified from the domain's current registrar data in the registry.<a href="#section-9-2" class="pilcrow">¶</a></p>
+<p id="section-9-3">The authorization request MUST convey the specific domain and the set of requested actions so that the registrar's AS can present the registrant with an accurate consent screen.<a href="#section-9-3" class="pilcrow">¶</a></p>
+<p id="section-9-4">The following diagram illustrates the complete delegation management flow:<a href="#section-9-4" class="pilcrow">¶</a></p>
+<span id="name-oauth-20-federated-delegati"></span><figure id="figure-2">
+        <div class="breakable lang-ascii sourcecode" id="section-9-5.1">
+<pre>  Client          DNS             Registry        Registrar
+(Registrant)    Operator                             AS
+     |               |               |               |
+     | 1. Request    |               |               |
+     |  delegation   |               |               |
+     |  mgmt for     |               |               |
+     |  foo.example  |               |               |
+     +--------------&gt;|               |               |
+     |               |               |               |
+     |               | 2. Discover   |               |
+     |               |  registrar    |               |
+     |               |  AS URI for   |               |
+     |               |  foo.example  |               |
+     |               +--------------&gt;|               |
+     |               |               |               |
+     |               | 3. Return     |               |
+     |               |  registrar    |               |
+     |               |  AS URI       |               |
+     |               |&lt;--------------|               |
+     |               |               |               |
+     | 4. Redirect   |               |               |
+     |  to Registrar |               |               |
+     |  AS (RAR:     |               |               |
+     |  type=rpp_    |               |               |
+     |  delegation,  |               |               |
+     |  domain=      |               |               |
+     |  foo.example, |               |               |
+     |  actions=     |               |               |
+     |  [update])    |               |               |
+     |&lt;--------------|               |               |
+     |               |               |               |
+     | 5. Auth &amp;     |               |               |
+     |  approve      |               |               |
+     |  delegation   |               |               |
+     |  scope at     |               |               |
+     |  Registrar AS |               |               |
+     +----------------------------------------------&gt;|
+     |               |               |               |
+     | 6. Auth code  |               |               |
+     |  + redirect   |               |               |
+     |  to DNS Op    |               |               |
+     |  callback URI |               |               |
+     |&lt;----------------------------------------------|
+     |               |               |               |
+     | 7. Follow     |               |               |
+     |  redirect     |               |               |
+     |  (auth code   |               |               |
+     |  delivered)   |               |               |
+     +--------------&gt;|               |               |
+     |               |               |               |
+     |               | 8. Exchange   |               |
+     |               |  auth code    |               |
+     |               |  for access   |               |
+     |               |  token        |               |
+     |               |  (back-       |               |
+     |               |  channel)     |               |
+     |               +------------------------------&gt;|
+     |               |               |               |
+     |               | 9. JWT        |               |
+     |               |  (authz_      |               |
+     |               |  details=     |               |
+     |               |  {type:rpp_   |               |
+     |               |  delegation,  |               |
+     |               |  domain=      |               |
+     |               |  foo.example, |               |
+     |               |  actions=     |               |
+     |               |  [update]})   |               |
+     |               |&lt;------------------------------|
+     |               |               |               |
+     |               | 10. Delegation|               |
+     |               |  update       |               |
+     |               |  request +    |               |
+     |               |  Bearer JWT   |               |
+     |               +--------------&gt;|               |
+     |               |               |               |
+     |               |               | 11. Validate  |
+     |               |               |  JWT (Reg.    |
+     |               |               |  AS pubkey,   |
+     |               |               |  verify type, |
+     |               |               |  domain,      |
+     |               |               |  actions)     |
+     |               |               |               |
+     |               |               | 12. Update    |
+     |               |               |  delegation   |
+     |               |               |  data for     |
+     |               |               |  foo.example  |
+     |               |               |               |
+     |               | 13. Update    |               |
+     |               |  successful   |               |
+     |               |&lt;--------------|               |
+     |               |               |               |
+     | 14. Delegation|               |               |
+     |  update       |               |               |
+     |  confirmed    |               |               |
+     |&lt;--------------|               |               |
+     |               |               |               |
+
+</pre>
+</div>
+<figcaption><a href="#figure-2" class="selfRef">Figure 2</a>:
+<a href="#name-oauth-20-federated-delegati" class="selfRef">OAuth 2.0 Federated Delegation Management Flow</a>
+        </figcaption></figure>
+<p id="section-9-6">The steps in the diagram are as follows:<a href="#section-9-6" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="compact type-1" id="section-9-7">
+<li id="section-9-7.1">The registrant asks the DNS Operator to manage delegation data for <code>foo.example</code>.<a href="#section-9-7.1" class="pilcrow">¶</a>
+</li>
+        <li id="section-9-7.2">The DNS Operator queries the registry's discovery endpoint to look up the sponsoring registrar's AS authorization URI. The registrar is identified from the current sponsoring registrar data for the domain in the registry.<a href="#section-9-7.2" class="pilcrow">¶</a>
+</li>
+        <li id="section-9-7.3">The registry returns the sponsoring registrar's AS authorization URI. If no AS URI is registered for the sponsoring registrar, the DNS Operator cannot proceed with the OAuth 2.0 delegation flow and MUST inform the registrant that the registrar does not support this mechanism.<a href="#section-9-7.3" class="pilcrow">¶</a>
+</li>
+        <li id="section-9-7.4">The DNS Operator redirects the registrant's browser to the registrar's AS. The authorization request MUST include an <code>authorization_details</code> parameter of type <code>rpp_delegation</code> with <code>object_type: "domain"</code>, <code>object_identifier: "foo.example"</code>, and <code>actions: ["read", "update"]</code> (RAR, <span>[<a href="#RFC9396" class="cite xref">RFC9396</a>]</span>). The DNS Operator's callback URI MUST be included as the OAuth 2.0 <code>redirect_uri</code>.<a href="#section-9-7.4" class="pilcrow">¶</a>
+</li>
+        <li id="section-9-7.5">The registrant authenticates at the registrar's AS and explicitly approves the delegation scope, providing verifiable consent for the DNS Operator to manage delegation data for the specified domain.<a href="#section-9-7.5" class="pilcrow">¶</a>
+</li>
+        <li id="section-9-7.6">The registrar's AS issues an authorization code and redirects the registrant's browser back to the DNS Operator's registered callback URI.<a href="#section-9-7.6" class="pilcrow">¶</a>
+</li>
+        <li id="section-9-7.7">The registrant's browser follows the redirect, delivering the authorization code to the DNS Operator's callback endpoint.<a href="#section-9-7.7" class="pilcrow">¶</a>
+</li>
+        <li id="section-9-7.8">The DNS Operator exchanges the authorization code for an access token at the registrar's AS token endpoint (back-channel, Authorization Code grant <a href="https://rfc-editor.org/rfc/rfc6749#appendix-Section%204.1" class="relref">Section 4.1</a>).<a href="#section-9-7.8" class="pilcrow">¶</a>
+</li>
+        <li id="section-9-7.9">The registrar's AS validates the code and issues a signed JWT access token (<span>[<a href="#RFC9068" class="cite xref">RFC9068</a>]</span>). The token MUST contain an <code>authorization_details</code> claim echoing the <code>rpp_delegation</code> object, including <code>object_type</code>, <code>object_identifier</code>, and <code>actions</code>.<a href="#section-9-7.9" class="pilcrow">¶</a>
+</li>
+        <li id="section-9-7.10">The DNS Operator submits the delegation update request to the registry RPP API, including the JWT as a Bearer token in the <code>Authorization</code> header. The request targets the delegation sub-resource of the domain (e.g., <code>PATCH /domains/foo.example/delegation</code>).<a href="#section-9-7.10" class="pilcrow">¶</a>
+</li>
+        <li id="section-9-7.11">The registry validates the JWT locally using the sponsoring registrar's AS public key (obtained via OAuth 2.0 Authorization Server Metadata <span>[<a href="#RFC8414" class="cite xref">RFC8414</a>]</span>). No live call to the registrar is required. The registry MUST verify that the <code>authorization_details</code> claim contains an <code>rpp_delegation</code> object whose <code>object_identifier</code> matches the domain in the request URL and whose <code>actions</code> contains <code>update</code>.<a href="#section-9-7.11" class="pilcrow">¶</a>
+</li>
+        <li id="section-9-7.12">The registry updates the delegation data (name servers and any associated glue records) for <code>foo.example</code>.<a href="#section-9-7.12" class="pilcrow">¶</a>
+</li>
+        <li id="section-9-7.13">The registry returns a successful update response to the DNS Operator.<a href="#section-9-7.13" class="pilcrow">¶</a>
+</li>
+        <li id="section-9-7.14">The DNS Operator confirms the completed delegation update to the registrant.<a href="#section-9-7.14" class="pilcrow">¶</a>
+</li>
+      </ol>
+</section>
+</div>
+<div id="data-objects">
+<section id="section-10">
+      <h2 id="name-data-objects">
+<a href="#section-10" class="section-number selfRef">10. </a><a href="#name-data-objects" class="section-name selfRef">Data Objects</a>
+      </h2>
+<p id="section-10-1">The RPP Data Object Catalog is extended to include each registrar's AS metadata.<a href="#section-10-1" class="pilcrow">¶</a></p>
+<ul class="compact">
+<li class="compact" id="section-10-2.1">Auth Server Metadata Object: This object describes the <code>authorization_server</code> for each registrar that operates its own AS. It contains the metadata necessary for a DNS Operator to interact with the registrar's AS, including the authorization endpoint URI and JWKS URI or public key material.<a href="#section-10-2.1" class="pilcrow">¶</a>
+</li>
+      </ul>
+<p id="section-10-3">TODO<a href="#section-10-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="endpoints">
+<section id="section-11">
+      <h2 id="name-endpoints">
+<a href="#section-11" class="section-number selfRef">11. </a><a href="#name-endpoints" class="section-name selfRef">Endpoints</a>
+      </h2>
+<p id="section-11-1">The Secure Delegation Management mechanism relies on the following RPP endpoints:<a href="#section-11-1" class="pilcrow">¶</a></p>
+<ul class="compact">
+<li class="compact" id="section-11-2.1">Domain discovery endpoint: returns the sponsoring registrar's AS authorization URI for a given domain name. Used by the DNS Operator to determine where to redirect the registrant.<a href="#section-11-2.1" class="pilcrow">¶</a>
+</li>
+        <li class="compact" id="section-11-2.2">Delegation sub-resource endpoint (e.g., <code>PATCH /domains/{domainId}/delegation</code>): accepts delegation update requests from DNS Operators bearing a valid <code>rpp_delegation</code> JWT.<a href="#section-11-2.2" class="pilcrow">¶</a>
+</li>
+      </ul>
+<p id="section-11-3">TODO<a href="#section-11-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="iana-considerations">
+<section id="section-12">
+      <h2 id="name-iana-considerations">
+<a href="#section-12" class="section-number selfRef">12. </a><a href="#name-iana-considerations" class="section-name selfRef">IANA Considerations</a>
+      </h2>
+<p id="section-12-1">TODO<a href="#section-12-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="internationalization-considerations">
+<section id="section-13">
+      <h2 id="name-internationalization-consid">
+<a href="#section-13" class="section-number selfRef">13. </a><a href="#name-internationalization-consid" class="section-name selfRef">Internationalization Considerations</a>
+      </h2>
+<p id="section-13-1">TODO<a href="#section-13-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="security-considerations">
+<section id="section-14">
+      <h2 id="name-security-considerations">
+<a href="#section-14" class="section-number selfRef">14. </a><a href="#name-security-considerations" class="section-name selfRef">Security Considerations</a>
+      </h2>
+<p id="section-14-1"><strong>Token scope.</strong> Tokens issued in this flow are scoped to a single domain name and to the specific set of actions granted by the registrant. The registry MUST reject tokens that do not contain an <code>rpp_delegation</code> <code>authorization_details</code> object whose <code>object_identifier</code> exactly matches the domain in the request URL.<a href="#section-14-1" class="pilcrow">¶</a></p>
+<p id="section-14-2"><strong>Token lifetime.</strong> Access tokens for delegation management MAY have a longer lifetime than tokens used for single-use operations such as object transfers, since they may be used for repeated updates. However, token lifetime MUST be bounded. Registrar ASs SHOULD issue tokens with a lifetime appropriate for the expected operational pattern, and MUST support token revocation.<a href="#section-14-2" class="pilcrow">¶</a></p>
+<p id="section-14-3"><strong>Revocation.</strong> Registrars MUST support token revocation (<span>[<a href="#RFC7009" class="cite xref">RFC7009</a>]</span>) so that registrants can revoke a DNS Operator's access at any time. The registry MUST check token revocation status before processing delegation update requests if the registrar's AS publishes a revocation endpoint.<a href="#section-14-3" class="pilcrow">¶</a></p>
+<p id="section-14-4"><strong>Consent granularity.</strong> The RAR <code>authorization_details</code> object allows the registrant to see exactly which domain and which actions they are consenting to. Registrar ASs MUST surface this information clearly on the consent screen.<a href="#section-14-4" class="pilcrow">¶</a></p>
+<p id="section-14-5"><strong>DNS Operator authentication.</strong> The registrar's AS MUST authenticate the DNS Operator as an OAuth 2.0 client before issuing tokens. At minimum, the DNS Operator MUST be registered as a confidential OAuth 2.0 client at the registrar's AS or use a publicly verifiable client authentication method.<a href="#section-14-5" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="change-history">
+<section id="section-15">
+      <h2 id="name-change-history">
+<a href="#section-15" class="section-number selfRef">15. </a><a href="#name-change-history" class="section-name selfRef">Change History</a>
+      </h2>
+<div id="version-00">
+<section id="section-15.1">
+        <h3 id="name-version-00">
+<a href="#section-15.1" class="section-number selfRef">15.1. </a><a href="#name-version-00" class="section-name selfRef">Version 00</a>
+        </h3>
+<ul class="compact">
+<li class="compact" id="section-15.1-1.1">Created initial draft with core concepts and delegation management flow.<a href="#section-15.1-1.1" class="pilcrow">¶</a>
+</li>
+        </ul>
+</section>
+</div>
+</section>
+</div>
+<section id="section-16">
+      <h2 id="name-normative-references">
+<a href="#section-16" class="section-number selfRef">16. </a><a href="#name-normative-references" class="section-name selfRef">Normative References</a>
+      </h2>
+<dl class="references">
+<dt id="I-D.wullink-rpp-core">[I-D.wullink-rpp-core]</dt>
+      <dd>
+<span class="refAuthor">Wullink, M.</span> and <span class="refAuthor">P. Kowalik</span>, <span class="refTitle">"RESTful Provisioning Protocol (RPP)"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-wullink-rpp-core-05</span>, <time datetime="2026-03-15" class="refDate">15 March 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-wullink-rpp-core-05">https://datatracker.ietf.org/doc/html/draft-wullink-rpp-core-05</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="I-D.wullink-rpp-oauth2">[I-D.wullink-rpp-oauth2]</dt>
+      <dd>
+<span class="refAuthor">Wullink, M.</span> and <span class="refAuthor">P. Kowalik</span>, <span class="refTitle">"RESTful Provisioning Protocol (RPP) - OAuth 2.0"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-wullink-rpp-oauth2-00</span>, <time datetime="2026" class="refDate">2026</time>, <span>&lt;<a href="https://sidn.github.io/ietf-rpp-oauth2/draft-wullink-rpp-oauth2.html">https://sidn.github.io/ietf-rpp-oauth2/draft-wullink-rpp-oauth2.html</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="REST">[REST]</dt>
+      <dd>
+<span class="refAuthor">Fielding, R.</span>, <span class="refTitle">"Architectural Styles and the Design of Network-based Software Architectures"</span>, <time datetime="2000" class="refDate">2000</time>, <span>&lt;<a href="http://www.ics.uci.edu/~fielding/pubs/dissertation/rest_arch_style.htm">http://www.ics.uci.edu/~fielding/pubs/dissertation/rest_arch_style.htm</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC2119">[RFC2119]</dt>
+      <dd>
+<span class="refAuthor">Bradner, S.</span>, <span class="refTitle">"Key words for use in RFCs to Indicate Requirement Levels"</span>, <span class="seriesInfo">BCP 14</span>, <span class="seriesInfo">RFC 2119</span>, <span class="seriesInfo">DOI 10.17487/RFC2119</span>, <time datetime="1997-03" class="refDate">March 1997</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc2119">https://www.rfc-editor.org/info/rfc2119</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC3986">[RFC3986]</dt>
+      <dd>
+<span class="refAuthor">Berners-Lee, T.</span>, <span class="refAuthor">Fielding, R.</span>, and <span class="refAuthor">L. Masinter</span>, <span class="refTitle">"Uniform Resource Identifier (URI): Generic Syntax"</span>, <span class="seriesInfo">STD 66</span>, <span class="seriesInfo">RFC 3986</span>, <span class="seriesInfo">DOI 10.17487/RFC3986</span>, <time datetime="2005-01" class="refDate">January 2005</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc3986">https://www.rfc-editor.org/info/rfc3986</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC6749">[RFC6749]</dt>
+      <dd>
+<span class="refAuthor">Hardt, D., Ed.</span>, <span class="refTitle">"The OAuth 2.0 Authorization Framework"</span>, <span class="seriesInfo">RFC 6749</span>, <span class="seriesInfo">DOI 10.17487/RFC6749</span>, <time datetime="2012-10" class="refDate">October 2012</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc6749">https://www.rfc-editor.org/info/rfc6749</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC7009">[RFC7009]</dt>
+      <dd>
+<span class="refAuthor">Lodderstedt, T., Ed.</span>, <span class="refAuthor">Dronia, S.</span>, and <span class="refAuthor">M. Scurtescu</span>, <span class="refTitle">"OAuth 2.0 Token Revocation"</span>, <span class="seriesInfo">RFC 7009</span>, <span class="seriesInfo">DOI 10.17487/RFC7009</span>, <time datetime="2013-08" class="refDate">August 2013</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc7009">https://www.rfc-editor.org/info/rfc7009</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC7519">[RFC7519]</dt>
+      <dd>
+<span class="refAuthor">Jones, M.</span>, <span class="refAuthor">Bradley, J.</span>, and <span class="refAuthor">N. Sakimura</span>, <span class="refTitle">"JSON Web Token (JWT)"</span>, <span class="seriesInfo">RFC 7519</span>, <span class="seriesInfo">DOI 10.17487/RFC7519</span>, <time datetime="2015-05" class="refDate">May 2015</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc7519">https://www.rfc-editor.org/info/rfc7519</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC8414">[RFC8414]</dt>
+      <dd>
+<span class="refAuthor">Jones, M.</span>, <span class="refAuthor">Sakimura, N.</span>, and <span class="refAuthor">J. Bradley</span>, <span class="refTitle">"OAuth 2.0 Authorization Server Metadata"</span>, <span class="seriesInfo">RFC 8414</span>, <span class="seriesInfo">DOI 10.17487/RFC8414</span>, <time datetime="2018-06" class="refDate">June 2018</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc8414">https://www.rfc-editor.org/info/rfc8414</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC9068">[RFC9068]</dt>
+      <dd>
+<span class="refAuthor">Bertocci, V.</span>, <span class="refTitle">"JSON Web Token (JWT) Profile for OAuth 2.0 Access Tokens"</span>, <span class="seriesInfo">RFC 9068</span>, <span class="seriesInfo">DOI 10.17487/RFC9068</span>, <time datetime="2021-10" class="refDate">October 2021</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc9068">https://www.rfc-editor.org/info/rfc9068</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC9396">[RFC9396]</dt>
+    <dd>
+<span class="refAuthor">Lodderstedt, T.</span>, <span class="refAuthor">Richer, J.</span>, and <span class="refAuthor">B. Campbell</span>, <span class="refTitle">"OAuth 2.0 Rich Authorization Requests"</span>, <span class="seriesInfo">RFC 9396</span>, <span class="seriesInfo">DOI 10.17487/RFC9396</span>, <time datetime="2023-05" class="refDate">May 2023</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc9396">https://www.rfc-editor.org/info/rfc9396</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+</dl>
+</section>
+<div id="acknowledgements">
+<section id="appendix-A">
+      <h2 id="name-acknowledgements">
+<a href="#name-acknowledgements" class="section-name selfRef">Acknowledgements</a>
+      </h2>
+<p id="appendix-A-1">TODO<a href="#appendix-A-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="authors-addresses">
+<section id="appendix-B">
+      <h2 id="name-authors-addresses">
+<a href="#name-authors-addresses" class="section-name selfRef">Authors' Addresses</a>
+      </h2>
+<address class="vcard">
+        <div dir="auto" class="left"><span class="fn nameRole">Maarten Wullink</span></div>
+<div dir="auto" class="left"><span class="org">SIDN Labs</span></div>
+<div class="email">
+<span>Email:</span>
+<a href="mailto:maarten.wullink@sidn.nl" class="email">maarten.wullink@sidn.nl</a>
+</div>
+<div class="url">
+<span>URI:</span>
+<a href="https://sidn.nl/" class="url">https://sidn.nl/</a>
+</div>
+</address>
+<address class="vcard">
+        <div dir="auto" class="left"><span class="fn nameRole">Pawel Kowalik</span></div>
+<div dir="auto" class="left"><span class="org">DENIC</span></div>
+<div class="email">
+<span>Email:</span>
+<a href="mailto:pawel.kowalik@denic.de" class="email">pawel.kowalik@denic.de</a>
+</div>
+<div class="url">
+<span>URI:</span>
+<a href="https://denic.de/" class="url">https://denic.de/</a>
+</div>
+</address>
+</section>
+</div>
+<script>const toc = document.getElementById("toc");
+toc.querySelector("h2").addEventListener("click", e => {
+  toc.classList.toggle("active");
+});
+toc.querySelector("nav").addEventListener("click", e => {
+  toc.classList.remove("active");
+});
+</script>
+</body>
+</html>
