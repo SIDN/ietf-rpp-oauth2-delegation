@@ -15,7 +15,7 @@
 <workgroup>Network Working Group</workgroup>
 
 <abstract>
-<t>This document describes how OAuth 2.0 <xref target="RFC6749"></xref> can be used to allow a third party, such as a DNS Operator, to manage delegation (name server) details for a domain in the registry database on behalf of the registrant. It extends the RPP OAuth 2.0 authorization model defined in <xref target="I-D.wullink-rpp-oauth2"></xref> with mechanisms specific to third-party delegation management via the RESTful Provisioning Protocol (RPP) <xref target="I-D.wullink-rpp-core"></xref>.</t>
+<t>This document describes how OAuth 2.0 <xref target="RFC6749"></xref> enables a third party, such as a DNS Operator, to manage delegation (name server) details for a domain on behalf of the registrant using the RESTful Provisioning Protocol (RPP). It extends the RPP OAuth 2.0 authorization model defined in <xref target="I-D.wullink-rpp-oauth2"></xref> with mechanisms specific to third-party delegation management via the RESTful Provisioning Protocol (RPP) <xref target="I-D.wullink-rpp-core"></xref>.</t>
 </abstract>
 
 </front>
@@ -23,16 +23,14 @@
 <middle>
 
 <section anchor="introduction"><name>Introduction</name>
-<t><strong>NOTE:</strong> This is a very early draft of how third-party delegation management could work in RPP. It is added here to provide a picture of the delegation flow and to facilitate discussion of the details and the security mechanisms that can be used to secure it. This document is expected to be significantly revised and updated as the delegation management flow and the security mechanisms are further developed and refined.</t>
-<t>In the domain name system, delegation refers to the assignment of name servers responsible for a DNS zone. The registry holds authoritative delegation data — the name server (NS) records and associated glue records — for each domain in its database. Ordinarily only the sponsoring registrar, acting on behalf of the registrant, may update this data via the RPP API.</t>
-<t>An increasingly common operational pattern is for a registrant to host their DNS with a dedicated DNS Operator that is not the sponsoring registrar. When the registrant wants the DNS Operator to manage their delegation settings — for example, to update name servers automatically — it is inconvenient and error-prone to require the registrant to relay every change through their registrar. Instead, the registrant should be able to grant the DNS Operator limited, revocable authority to update delegation data directly at the registry.</t>
-<t>This document defines a mechanism based on OAuth 2.0 federation that enables this pattern securely and without any bilateral arrangement between the DNS Operator and the registrar. The registrant authenticates at the registrar's Authorization Server (AS) and grants explicit, domain-scoped consent for the DNS Operator to manage delegation data. The registrar's AS issues a signed JWT that the DNS Operator presents to the registry when submitting delegation update requests. The registry validates the token locally using the registrar's AS public key, which was registered during registrar accreditation, and authorises the update if the token is valid.</t>
+<t><strong>NOTE:</strong> This is a very early draft of how third-party delegation management could work in RPP. It is added here to provide an idea of the possible delegation flow and to facilitate discussion. This document is expected to be significantly revised and updated as the delegation management flow and the security mechanisms are further developed and refined.</t>
+<t>In the domain name system, delegation refers to the assignment of name servers responsible for a DNS zone. The registry holds authoritative delegation data. The name server (NS) records and associated glue records for each domain in its database. Ordinarily only the sponsoring registrar, acting on behalf of the registrant, may update this data via the RPP API.</t>
+<t>An increasingly common operational pattern is for a registrant to host their DNS with a dedicated DNS Operator that is not the sponsoring registrar. When the registrant wants the DNS Operator to manage their delegation settings it is inconvenient and error-prone to require the registrant to relay every change through their registrar or configure it manually using registrar provided tools. Instead, the registrant should be able to grant the DNS Operator limited, revocable authority to update delegation data directly at the registry using the RPP API.</t>
+<t>This document defines a mechanism based on OAuth 2.0 federation that enables this pattern securely and without any bilateral arrangement between the DNS Operator and the registrar. The registrant authenticates at the registrar's Authorization Server (AS) and grants explicit, domain-scoped consent for the DNS Operator to manage delegation data. The registrar's AS issues a signed access token that the DNS Operator presents to the registry when submitting an RPP domain update requests. The registry validates the token locally using the registrar's AS public key and authorises the update if the token is valid.</t>
 </section>
 
 <section anchor="terminology"><name>Terminology</name>
 <t>In this document the following terminology is used.</t>
-<t>REST - Representational State Transfer (<xref target="REST"></xref>). An architectural style.</t>
-<t>RESTful - A RESTful web service is a web service or API implemented using HTTP and the principles of <xref target="REST"></xref>.</t>
 <t>RESTful Provisioning Protocol or RPP - The protocol described in this document.</t>
 <t>URL - A Uniform Resource Locator as defined in <xref target="RFC3986"></xref>.</t>
 <t>Resource - An object having a type, data, and possible relationship to other resources, identified by a URL.</t>
@@ -53,12 +51,12 @@
 </section>
 
 <section anchor="use-case"><name>Use Case</name>
-<t>A registrant (<tt>alice@example.com</tt>) has registered <tt>foo.example</tt> through Registrar A. She has also signed up with DNS Operator B to host her DNS zones. She wants DNS Operator B to be able to update the name servers for <tt>foo.example</tt> in the registry database without having to route every change through Registrar A.</t>
+<t>A registrant has registered <tt>foo.example</tt> through Registrar A and has also signed up with DNS Operator B to host the DNS zones for <tt>foo.example</tt>. The registrant wants DNS Operator B to be able to update the name servers for <tt>foo.example</tt> in the registry database without having to route every change through Registrar A.</t>
 <t>The desired outcome is:</t>
 
 <ol spacing="compact">
 <li>DNS Operator B can update delegation data (name servers and glue records) for <tt>foo.example</tt> at the registry directly.</li>
-<li>The authority is scoped to delegation management only — DNS Operator B cannot modify registrant contact data, initiate transfers, or perform any other operation.</li>
+<li>The authority is scoped to delegation management only, e.g. DNS Operator B cannot modify registrant contact data, initiate transfers, or perform any other operation.</li>
 <li>The authority is granted explicitly by the registrant via an interactive OAuth 2.0 flow at Registrar A's AS.</li>
 <li>The registry can verify the authority independently, without contacting Registrar A at request time.</li>
 <li>The authority can be revoked by the registrant at any time, at which point the registry will no longer accept tokens issued for DNS Operator B.</li>
@@ -67,8 +65,8 @@
 
 <section anchor="authorization-request-details"><name>Authorization Request Details</name>
 <t>OAuth 2.0 Rich Authorization Requests (RAR) <xref target="RFC9396"></xref> extends the standard OAuth 2.0 authorization request with an <tt>authorization_details</tt> parameter that carries a structured JSON object describing precisely what the client is requesting authorization for. Unlike scopes, which are coarse-grained string tokens, <tt>authorization_details</tt> allows the request to include typed, fine-grained authorization data, such as the specific domain name whose delegation data is to be managed. The AS can present this information to the registrant in a meaningful consent screen.</t>
-<t>For the delegation management flow, the DNS Operator includes an <tt>authorization_details</tt> object of type <tt>rpp_delegation</tt> in the authorization request to the registrar's AS. The registrant sees exactly which domain they are consenting to allow the DNS Operator to manage. The AS MUST echo the <tt>authorization_details</tt> object back as a claim in the issued JWT, giving the registry verifiable, tamper-proof evidence of what was authorized and for which domain.</t>
-<t>The <tt>type</tt> field MUST be set to <tt>rpp_delegation</tt>. Table <xref target="tbl-rar"></xref> lists the RAR fields defined for RPP delegation management.</t>
+<t>For the delegation management flow, the DNS Operator includes an <tt>authorization_details</tt> object of type <tt>delegation</tt> in the authorization request to the registrar's AS. The registrant sees exactly which domain they are consenting to allow the DNS Operator to manage. The AS MUST echo the <tt>authorization_details</tt> object back as a claim in the issued JWT, giving the registry verifiable, tamper-proof evidence of what was authorized and for which domain.</t>
+<t>The <tt>type</tt> field MUST be set to <tt>delegation</tt>. Table <xref target="tbl-rar"></xref> lists the RAR fields defined for RPP delegation management.</t>
 <table anchor="tbl-rar"><name>RPP Delegation Authorization, RAR <tt>authorization_details</tt> object (<xref target="RFC9396"></xref>)</name>
 <thead>
 <tr>
@@ -84,7 +82,7 @@
 <td><tt>type</tt></td>
 <td>String</td>
 <td>REQUIRED</td>
-<td>MUST be <tt>rpp_delegation</tt>.</td>
+<td>MUST be <tt>delegation</tt>.</td>
 </tr>
 
 <tr>
@@ -98,77 +96,65 @@
 <td><tt>object_identifier</tt></td>
 <td>String</td>
 <td>REQUIRED</td>
-<td>The fully qualified domain name whose delegation data is to be managed (e.g., <tt>foo.example</tt>).</td>
-</tr>
-
-<tr>
-<td><tt>actions</tt></td>
-<td>Array of Strings</td>
-<td>REQUIRED</td>
-<td>The set of permitted delegation management actions. MUST contain one or more of: <tt>read</tt>, <tt>update</tt>.</td>
+<td>The unique identifier of the specific domain whose delegation data is to be managed (e.g., <tt>foo.example</tt>).</td>
 </tr>
 </tbody>
 </table><t>Example RAR <tt>authorization_details</tt> value for managing delegation of <tt>foo.example</tt>:</t>
 
 <sourcecode type="json"><![CDATA[[{
-  "type": "rpp_delegation",
+  "type": "delegation",
   "object_type": "domain",
-  "object_identifier": "foo.example",
-  "actions": ["read", "update"]
+  "object_identifier": "foo.example"
 }]
 ]]>
 </sourcecode>
 <t>The registrar's AS MUST echo the <tt>authorization_details</tt> back as a claim in the issued JWT. The registry MUST validate the <tt>authorization_details</tt> claim in the token and MUST verify that <tt>object_type</tt> and <tt>object_identifier</tt> match the domain whose delegation data is being updated.</t>
+<t>When the registrar's AS does not support RAR (<xref target="RFC9396"></xref>), the specific object being managed MUST be conveyed via the <tt>rpp_op_type</tt>, <tt>rpp_object_type</tt> and <tt>rpp_object_identifier</tt> claims rather than encoded in the <tt>authorization_details</tt> claim. The <tt>rpp_op_type</tt> claim MUST be set to <tt>delegation</tt>. The <tt>rpp_object_type</tt> claim MUST be set to the RPP object type being managed, for delegation type this MUST be <tt>domain</tt>. The <tt>rpp_object_identifier</tt> claim MUST be set to the specific domain being managed (e.g., <tt>foo.example</tt>). The registry MUST validate that these claim values match the domain being managed.</t>
 </section>
 
 <section anchor="scopes"><name>Scopes</name>
-<t>RPP OAuth 2.0 scopes are defined in <xref target="I-D.wullink-rpp-oauth2"></xref>. Delegation management uses the <tt>domain:delegation:write</tt> scope. This scope grants the bearer the right to update delegation data (name servers and glue records) for a specific domain, as further constrained by the <tt>authorization_details</tt> claim.</t>
-</section>
-
-<section anchor="claims"><name>Claims</name>
-<t>RPP access tokens MUST conform to the JWT Profile for OAuth 2.0 Access Tokens defined in <xref target="RFC9068"></xref>. This profile establishes a standardized set of claims that RPP uses to make authorization decisions consistently across implementations and identity providers.</t>
-
-<section anchor="rpp-specific-claims"><name>RPP-Specific Claims</name>
-<t>In addition to the standard <xref target="RFC9068"></xref> claims, table <xref target="tbl-rpp-claims"></xref> lists the RPP-specific claims relevant to delegation management. Required claims MUST be present in every RPP delegation access token. Optional claims SHOULD be included when applicable.</t>
-<table anchor="tbl-rpp-claims"><name>RPP Delegation Access Token Claims</name>
+<t>RPP OAuth 2.0 scopes are defined in <xref target="I-D.wullink-rpp-oauth2"></xref>. Delegation management introduces new delegation specific scopes: <tt>delegation:read</tt>. This scope grants the bearer the right to update delegation data (name servers and glue records) for a specific domain, as further constrained by the <tt>authorization_details</tt> claim.</t>
+<t>Table <xref target="tbl-scopes"></xref> defines the the new OAuth 2.0 scopes for Delegation Management. Each scope grants a specific set of permissions on the RPP domain resource. The registry MUST enforce that the access token presented in a delegation update request contains the appropriate scope(s) for the requested operation.</t>
+<table anchor="tbl-scopes"><name>RPP OAuth 2.0 Scopes for Delegation Management</name>
 <thead>
 <tr>
-<th>Claim</th>
-<th>Requirement</th>
-<th>Type</th>
-<th>Description</th>
+<th>Scope</th>
+<th>Data Object</th>
+<th>Operations Granted</th>
 </tr>
 </thead>
 
 <tbody>
 <tr>
-<td><tt>rpp_object_id</tt></td>
-<td>OPTIONAL</td>
-<td>String</td>
-<td>The domain name whose delegation data may be managed. MUST be present when the <tt>authorization_details</tt> claim is not present. The value MUST be the fully qualified domain name (e.g., <tt>foo.example</tt>). The RPP server MUST validate that this value matches the domain in the update request. This claim MUST NOT be present when <tt>authorization_details</tt> is present.</td>
+<td><tt>delegation:read</tt></td>
+<td>Domain Name</td>
+<td>Read delegation data</td>
 </tr>
 
 <tr>
-<td><tt>authorization_details</tt></td>
-<td>REQUIRED</td>
-<td>Array of Objects</td>
-<td>Rich authorization details as defined by <xref target="RFC9396"></xref>. MUST be present in access tokens for the delegation management flow when RAR is used. Each object in the array MUST have a <tt>type</tt> field set to <tt>rpp_delegation</tt> and MUST include <tt>object_type</tt>, <tt>object_identifier</tt>, and <tt>actions</tt> fields (see <xref target="tbl-rar"></xref>). The RPP server MUST validate that <tt>object_type</tt> and <tt>object_identifier</tt> match the domain in the update request, and that <tt>actions</tt> contains <tt>update</tt>.</td>
+<td><tt>delegation:update</tt></td>
+<td>Domain Name</td>
+<td>Update delegation data</td>
 </tr>
 </tbody>
 </table></section>
+
+<section anchor="claims"><name>Claims</name>
+<t>The delegation management flow uses the same RPP-specific claims defined in <xref target="I-D.wullink-rpp-oauth2"></xref>. No new claims are introduced for delegation management.</t>
 </section>
 
 <section anchor="trust-model"><name>Trust Model</name>
-<t>The delegation management mechanism uses the registry as the central trust anchor, operating as a hub-and-spoke topology. Registrars establish a trust relationship with the registry during accreditation. DNS Operators MUST also be pre-registered with the registry in order to obtain access to the RPP API. This pre-registration is necessary to look up the sponsoring registrar's AS URI for a domain and to submit delegation update requests. No bilateral arrangement between the DNS Operator and the registrar is required; all delegation authority flows through the registrant's explicit consent at the registrar's AS.</t>
+<t>The delegation management mechanism uses the registry as the central trust anchor, operating as a hub-and-spoke topology. Registrars establish a trust relationship with the registry during accreditation. DNS Operators MUST also be pre-registered with the registry in order to obtain access to the RPP API. No bilateral arrangement between the DNS Operator and the registrar is required; all delegation authority flows through the registrant's explicit consent at the registrar's AS.</t>
 <t><strong>Registry as trust anchor.</strong> As part of registrar onboarding, each registrar that operates its own AS (i.e., maintains registrant accounts) MUST register its AS metadata with the registry. This includes at minimum:</t>
 
 <ul spacing="compact">
 <li>The AS's authorization endpoint URI, used by the DNS Operator to construct the consent redirect.</li>
 <li>The AS's JWKS endpoint URI or the public key material itself, used by the registry to validate tokens issued by that AS.</li>
+<li>TODO</li>
 </ul>
-<t>The registry stores this metadata as part of the registrar's profile and makes it available via the discovery mechanism.</t>
+<t>The registry stores this metadata as part of the registrar's profile and makes it available to approved DNS operators as part of the delegation update flow.</t>
 <t><strong>Token validation without bilateral trust.</strong> When the registry receives a delegation update request carrying a JWT issued by the registrar's AS, it validates the token locally using the registrar's AS public key that was registered at onboarding. No runtime call to the registrar or its AS is required. The registry already trusts that public key because it was registered through the accreditation process.</t>
-<t><strong>DNS Operator.</strong> The DNS Operator MUST be pre-registered with the registry to gain access to the RPP API. This pre-registration grants the DNS Operator the credentials necessary to query the registry's discovery endpoint (to look up the sponsoring registrar's AS URI for a given domain) and to submit delegation update requests on behalf of a registrant. The DNS Operator does not require any pre-existing relationship with the registrar; the only registrar-side requirement is that the registrar's AS accepts the DNS Operator's <tt>redirect_uri</tt> as a valid OAuth 2.0 client redirect URI.</t>
+<t><strong>DNS Operator.</strong> The DNS Operator MUST be pre-registered with the registry to gain access to the RPP API. This pre-registration grants the DNS Operator the credentials necessary to query the RPP registrar info endpoint (to look up the sponsoring registrar's AS URI for a given domain) and to submit delegation update requests on behalf of a registrant. The DNS Operator does not require any pre-existing relationship with the registrar; the only registrar-side requirement is that the registrar's AS accepts the DNS Operator's <tt>redirect_uri</tt> as a valid OAuth 2.0 client redirect URI.</t>
 <t><strong>Security properties.</strong> This model provides the following guarantees:</t>
 
 <ul spacing="compact">
@@ -176,61 +162,8 @@
 <li>The DNS Operator cannot forge registrant consent, because the token is issued by the registrar's AS after the registrant has authenticated and approved the scope.</li>
 <li>The registry controls the set of trusted ASs by controlling which registrar AS metadata it accepts at onboarding.</li>
 <li>DNS Operators need no knowledge of registrar internals beyond what the registry exposes via the discovery endpoint. DNS Operators do require pre-registration with the registry to access the RPP API, but require no bilateral arrangement with any individual registrar.</li>
-<li>Tokens are scoped to a single domain and a specific set of actions, limiting the blast radius of a compromised token.</li>
+<li>Tokens are scoped to a single domain and a specific set of actions, limiting the impact of a compromised token.</li>
 </ul>
-<t>The following diagram shows how AS URIs and public keys flow through the registry and how the DNS Operator uses them to redirect the registrant's browser:</t>
-<figure><name>RPP Delegation Trust Model — Onboarding, Discovery, and Token Flow
-</name>
-<sourcecode type="ascii"><![CDATA[  DNS Operator         Registry           Registrar
-                     (Trust Anchor)
-     |                    |                    |
-     : --- Onboarding --------------------------:
-     |                    |                    |
-     |                    | Register AS        |
-     |                    | URI + JWKS pubkey  |
-     |                    |<-------------------|
-     |                    |                    |
-     : --- Delegation management time --------- :
-     |                    |                    |
-     | Discover Registrar |                    |
-     | AS URI for domain  |                    |
-     +------------------->|                    |
-     |                    |                    |
-     | AS URI returned    |                    |
-     |<-------------------|                    |
-     |                    |                    |
-     | Redirect registrant's browser           |
-     | to Registrar AS                         |
-     +---------------------------------------->|
-     |                    |                    |
-     | Auth code returned via browser redirect |
-     |<----------------------------------------|
-     |                    |                    |
-     | Exchange auth code |                    |
-     | for access token   |                    |
-     | (back-channel)     |                    |
-     +---------------------------------------->|
-     |                    |                    |
-     | JWT (signed by     |                    |
-     | Registrar AS)      |                    |
-     |<----------------------------------------|
-     |                    |                    |
-     | Delegation update  |                    |
-     | request + Bearer   |                    |
-     | JWT                |                    |
-     +------------------->|                    |
-     |                    |                    |
-     |                    | Validate JWT using |
-     |                    | cached Registrar   |
-     |                    | JWKS pubkey        |
-     |                    | (no runtime call)  |
-     |                    |                    |
-     | Update result      |                    |
-     |<-------------------|                    |
-     |                    |                    |
-]]>
-</sourcecode>
-</figure>
 </section>
 
 <section anchor="delegation-management-flow"><name>Delegation Management Flow</name>
@@ -238,123 +171,119 @@
 <t>Before redirecting the registrant, the DNS Operator MUST first query the registry's discovery endpoint to resolve the sponsoring registrar's AS authorization URI for the domain. The sponsoring registrar is identified from the domain's current registrar data in the registry.</t>
 <t>The authorization request MUST convey the specific domain and the set of requested actions so that the registrar's AS can present the registrant with an accurate consent screen.</t>
 <t>The following diagram illustrates the complete delegation management flow:</t>
-<figure><name>OAuth 2.0 Federated Delegation Management Flow
+<figure><name>RPP Delegation Trust Model — Onboarding, Discovery, and Token Flow
 </name>
-<sourcecode type="ascii"><![CDATA[  Client          DNS             Registry        Registrar
-(Registrant)    Operator                             AS
-     |               |               |               |
-     | 1. Request    |               |               |
-     |  delegation   |               |               |
-     |  mgmt for     |               |               |
-     |  foo.example  |               |               |
-     +-------------->|               |               |
-     |               |               |               |
-     |               | 2. Discover   |               |
-     |               |  registrar    |               |
-     |               |  AS URI for   |               |
-     |               |  foo.example  |               |
-     |               +-------------->|               |
-     |               |               |               |
-     |               | 3. Return     |               |
-     |               |  registrar    |               |
-     |               |  AS URI       |               |
-     |               |<--------------|               |
-     |               |               |               |
-     | 4. Redirect   |               |               |
-     |  to Registrar |               |               |
-     |  AS (RAR:     |               |               |
-     |  type=rpp_    |               |               |
-     |  delegation,  |               |               |
-     |  domain=      |               |               |
-     |  foo.example, |               |               |
-     |  actions=     |               |               |
-     |  [update])    |               |               |
-     |<--------------|               |               |
-     |               |               |               |
-     | 5. Auth &     |               |               |
-     |  approve      |               |               |
-     |  delegation   |               |               |
-     |  scope at     |               |               |
-     |  Registrar AS |               |               |
-     +---------------------------------------------->|
-     |               |               |               |
-     | 6. Auth code  |               |               |
-     |  + redirect   |               |               |
-     |  to DNS Op    |               |               |
-     |  callback URI |               |               |
-     |<----------------------------------------------|
-     |               |               |               |
-     | 7. Follow     |               |               |
-     |  redirect     |               |               |
-     |  (auth code   |               |               |
-     |  delivered)   |               |               |
-     +-------------->|               |               |
-     |               |               |               |
-     |               | 8. Exchange   |               |
-     |               |  auth code    |               |
-     |               |  for access   |               |
-     |               |  token        |               |
-     |               |  (back-       |               |
-     |               |  channel)     |               |
-     |               +------------------------------>|
-     |               |               |               |
-     |               | 9. JWT        |               |
-     |               |  (authz_      |               |
-     |               |  details=     |               |
-     |               |  {type:rpp_   |               |
-     |               |  delegation,  |               |
-     |               |  domain=      |               |
-     |               |  foo.example, |               |
-     |               |  actions=     |               |
-     |               |  [update]})   |               |
-     |               |<------------------------------|
-     |               |               |               |
-     |               | 10. Delegation|               |
-     |               |  update       |               |
-     |               |  request +    |               |
-     |               |  Bearer JWT   |               |
-     |               +-------------->|               |
-     |               |               |               |
-     |               |               | 11. Validate  |
-     |               |               |  JWT (Reg.    |
-     |               |               |  AS pubkey,   |
-     |               |               |  verify type, |
-     |               |               |  domain,      |
-     |               |               |  actions)     |
-     |               |               |               |
-     |               |               | 12. Update    |
-     |               |               |  delegation   |
-     |               |               |  data for     |
-     |               |               |  foo.example  |
-     |               |               |               |
-     |               | 13. Update    |               |
-     |               |  successful   |               |
-     |               |<--------------|               |
-     |               |               |               |
-     | 14. Delegation|               |               |
-     |  update       |               |               |
-     |  confirmed    |               |               |
-     |<--------------|               |               |
-     |               |               |               |
+<sourcecode type="ascii"><![CDATA[  Client        DNS Operator       Registry          Registrar
+(Registrant)                     (Trust Anchor)         AS
+     |               |                |                  |
+     : --- Onboarding ---------------------------------- :
+     |               |                |                  |
+     |               | 1. Register    |                  |
+     |               | DNS Operator   |                  |
+     |               | account        |                  |
+     |               +--------------->|                  |
+     |               |                |                  |
+     |               | 2. Account     |                  |
+     |               | credentials    |                  |
+     |               | returned       |                  |
+     |               |<---------------|                  |
+     |               |                |                  |
+     |               |                | 3. Register AS   |
+     |               |                | URI + JWKS pubkey|
+     |               |                |<-----------------|
+     |               |                |                  |
+     : --- Delegation management time ------------------- :
+     |               |                |                  |
+     | 4. Request    |                |                  |
+     | delegation    |                |                  |
+     | mgmt for      |                |                  |
+     | foo.example   |                |                  |
+     +-------------->|                |                  |
+     |               |                |                  |
+     |               | 5. Discover    |                  |
+     |               | Reg. AS URI    |                  |
+     |               | for domain     |                  |
+     |               +--------------->|                  |
+     |               |                |                  |
+     |               | 6. AS URI      |                  |
+     |               | returned       |                  |
+     |               |<---------------|                  |
+     |               |                |                  |
+     | 7. Redirect   |                |                  |
+     | to Registrar  |                |                  |
+     | AS            |                |                  |
+     |<--------------|                |                  |
+     |               |                |                  |
+     | 8. Auth &     |                |                  |
+     | approve       |                |                  |
+     | delegation    |                |                  |
+     | scope         |                |                  |
+     +-------------------------------------------------->|
+     |               |                |                  |
+     | 9. Auth code  |                |                  |
+     | + redirect to |                |                  |
+     | DNS Op        |                |                  |
+     | callback URI  |                |                  |
+     |<--------------------------------------------------|
+     |               |                |                  |
+     | 10. Follow    |                |                  |
+     | redirect      |                |                  |
+     | (auth code    |                |                  |
+     | delivered)    |                |                  |
+     +-------------->|                |                  |
+     |               |                |                  |
+     |               | 11. Exchange   |                  |
+     |               | auth code for  |                  |
+     |               | access token   |                  |
+     |               | (back-channel) |                  |
+     |               +---------------------------------->|
+     |               |                |                  |
+     |               | 12. JWT signed |                  |
+     |               | by Registrar AS|                  |
+     |               |<----------------------------------|
+     |               |                |                  |
+     |               | 13. Delegation |                  |
+     |               | update request |                  |
+     |               | + Bearer JWT   |                  |
+     |               +--------------->|                  |
+     |               |                |                  |
+     |               |                | 14. Validate JWT |
+     |               |                | using cached Reg.|
+     |               |                | JWKS pubkey      |
+     |               |                | (no runtime call)|
+     |               |                |                  |
+     |               |                | 15. Notify       | 
+     |               | 16. Update.    |     Registrar    |
+     |               | result         |----------------->|
+     |               |<---------------|                  |
+     |               |                |                  |
+     | 17. Delegation|                |                  |
+     | update        |                |                  |
+     | confirmed     |                |                  |
+     |<--------------|                |                  |
+     |               |                |                  |
 ]]>
 </sourcecode>
 </figure>
 <t>The steps in the diagram are as follows:</t>
 
 <ol spacing="compact">
+<li>During DNS Operator onboarding, the DNS Operator registers an account with the registry to obtain API credentials. The registry grants the DNS Operator access to the RPP API endpoints needed for delegation management, including the registrar discovery endpoint and the delegation update endpoint.</li>
+<li>The registry returns the API credentials to the DNS Operator.</li>
+<li>During registrar onboarding, the registrar registers its AS authorization endpoint URI and JWKS public key material with the registry. The registry stores this as part of the registrar's profile.</li>
 <li>The registrant asks the DNS Operator to manage delegation data for <tt>foo.example</tt>.</li>
-<li>The DNS Operator queries the registry's discovery endpoint to look up the sponsoring registrar's AS authorization URI. The registrar is identified from the current sponsoring registrar data for the domain in the registry.</li>
-<li>The registry returns the sponsoring registrar's AS authorization URI. If no AS URI is registered for the sponsoring registrar, the DNS Operator cannot proceed with the OAuth 2.0 delegation flow and MUST inform the registrant that the registrar does not support this mechanism.</li>
-<li>The DNS Operator redirects the registrant's browser to the registrar's AS. The authorization request MUST include an <tt>authorization_details</tt> parameter of type <tt>rpp_delegation</tt> with <tt>object_type: &quot;domain&quot;</tt>, <tt>object_identifier: &quot;foo.example&quot;</tt>, and <tt>actions: [&quot;read&quot;, &quot;update&quot;]</tt> (RAR, <xref target="RFC9396"></xref>). The DNS Operator's callback URI MUST be included as the OAuth 2.0 <tt>redirect_uri</tt>.</li>
-<li>The registrant authenticates at the registrar's AS and explicitly approves the delegation scope, providing verifiable consent for the DNS Operator to manage delegation data for the specified domain.</li>
+<li>The DNS Operator queries the registry's RPP registrar info endpoint, providing the domain name, to look up the sponsoring registrar's AS authorization URI.</li>
+<li>The registry returns the sponsoring registrar's AS authorization URI. If no AS URI is registered for the sponsoring registrar, the delegation management flow cannot proceed and the DNS Operator MUST inform the registrant that the registrar does not support this mechanism.</li>
+<li>The DNS Operator redirects the registrant's browser to the registrar's AS with an authorization request that includes an <tt>authorization_details</tt> parameter of type <tt>delegation</tt> with <tt>object_type: &quot;domain&quot;</tt>, <tt>object_identifier: &quot;foo.example&quot;</tt> (RAR, <xref target="RFC9396"></xref>). The DNS Operator's callback URI MUST be included as the OAuth 2.0 <tt>redirect_uri</tt>.</li>
+<li>The registrant authenticates at the registrar's AS and approves the delegation scope.</li>
 <li>The registrar's AS issues an authorization code and redirects the registrant's browser back to the DNS Operator's registered callback URI.</li>
 <li>The registrant's browser follows the redirect, delivering the authorization code to the DNS Operator's callback endpoint.</li>
 <li>The DNS Operator exchanges the authorization code for an access token at the registrar's AS token endpoint (back-channel, Authorization Code grant <xref target="RFC6749" sectionFormat="bare" section="Section 4.1"></xref>).</li>
-<li>The registrar's AS validates the code and issues a signed JWT access token (<xref target="RFC9068"></xref>). The token MUST contain an <tt>authorization_details</tt> claim echoing the <tt>rpp_delegation</tt> object, including <tt>object_type</tt>, <tt>object_identifier</tt>, and <tt>actions</tt>.</li>
+<li>The registrar's AS validates the code and issues a signed JWT access token (<xref target="RFC9068"></xref>) containing an <tt>authorization_details</tt> claim that echoes the received <tt>authorization_details</tt> claim.</li>
 <li>The DNS Operator submits the delegation update request to the registry RPP API, including the JWT as a Bearer token in the <tt>Authorization</tt> header. The request targets the delegation sub-resource of the domain (e.g., <tt>PATCH /domains/foo.example/delegation</tt>).</li>
-<li>The registry validates the JWT locally using the sponsoring registrar's AS public key (obtained via OAuth 2.0 Authorization Server Metadata <xref target="RFC8414"></xref>). No live call to the registrar is required. The registry MUST verify that the <tt>authorization_details</tt> claim contains an <tt>rpp_delegation</tt> object whose <tt>object_identifier</tt> matches the domain in the request URL and whose <tt>actions</tt> contains <tt>update</tt>.</li>
-<li>The registry updates the delegation data (name servers and any associated glue records) for <tt>foo.example</tt>.</li>
-<li>The registry returns a successful update response to the DNS Operator.</li>
+<li>The registry validates the JWT locally using the sponsoring registrar's AS public key (obtained via OAuth 2.0 Authorization Server Metadata <xref target="RFC8414"></xref>). No live call to the registrar is required. The registry MUST verify that the <tt>authorization_details</tt> claim contains an <tt>object_identifier</tt> that matches the domain in the request.</li>
+<li>Notify the registrar of the delegation update, so that the registrar can reflect the change in its own systems and provide accurate information to the registrant.</li>
+<li>The registry updates the delegation data (name servers and any associated glue records) for <tt>foo.example</tt> and returns the result to the DNS Operator.</li>
 <li>The DNS Operator confirms the completed delegation update to the registrant.</li>
 </ol>
 </section>
@@ -364,7 +293,9 @@
 
 <ul spacing="compact">
 <li>Auth Server Metadata Object: This object describes the <tt>authorization_server</tt> for each registrar that operates its own AS. It contains the metadata necessary for a DNS Operator to interact with the registrar's AS, including the authorization endpoint URI and JWKS URI or public key material.</li>
+<li></li>
 </ul>
+<t><strong>TODO</strong> Add model of the actual data objects for delegation management, e.g. the delegation sub-resource of the domain object, and the expected request and response formats for delegation update requests.</t>
 <t>TODO</t>
 </section>
 
@@ -372,8 +303,8 @@
 <t>The Secure Delegation Management mechanism relies on the following RPP endpoints:</t>
 
 <ul spacing="compact">
-<li>Domain discovery endpoint: returns the sponsoring registrar's AS authorization URI for a given domain name. Used by the DNS Operator to determine where to redirect the registrant.</li>
-<li>Delegation sub-resource endpoint (e.g., <tt>PATCH /domains/{domainId}/delegation</tt>): accepts delegation update requests from DNS Operators bearing a valid <tt>rpp_delegation</tt> JWT.</li>
+<li>Registrar info endpoint: returns the sponsoring registrar's AS authorization URI for a given domain name. Used by the DNS Operator to determine where to redirect the registrant.</li>
+<li>Delegation sub-resource endpoint (e.g., <tt>PATCH /domains/{domainId}/delegation</tt>).</li>
 </ul>
 <t>TODO</t>
 </section>
@@ -387,11 +318,10 @@
 </section>
 
 <section anchor="security-considerations"><name>Security Considerations</name>
-<t><strong>Token scope.</strong> Tokens issued in this flow are scoped to a single domain name and to the specific set of actions granted by the registrant. The registry MUST reject tokens that do not contain an <tt>rpp_delegation</tt> <tt>authorization_details</tt> object whose <tt>object_identifier</tt> exactly matches the domain in the request URL.</t>
+<t><strong>Token scope.</strong> Tokens issued in this flow are scoped to a single domain name and to the specific set of actions granted by the registrant. The registry MUST reject tokens that do not contain an <tt>authorization_details</tt> object whose <tt>object_identifier</tt> exactly matches the domain in the request URL.</t>
 <t><strong>Token lifetime.</strong> Access tokens for delegation management MAY have a longer lifetime than tokens used for single-use operations such as object transfers, since they may be used for repeated updates. However, token lifetime MUST be bounded. Registrar ASs SHOULD issue tokens with a lifetime appropriate for the expected operational pattern, and MUST support token revocation.</t>
 <t><strong>Revocation.</strong> Registrars MUST support token revocation (<xref target="RFC7009"></xref>) so that registrants can revoke a DNS Operator's access at any time. The registry MUST check token revocation status before processing delegation update requests if the registrar's AS publishes a revocation endpoint.</t>
 <t><strong>Consent granularity.</strong> The RAR <tt>authorization_details</tt> object allows the registrant to see exactly which domain and which actions they are consenting to. Registrar ASs MUST surface this information clearly on the consent screen.</t>
-<t><strong>DNS Operator authentication.</strong> The registrar's AS MUST authenticate the DNS Operator as an OAuth 2.0 client before issuing tokens. At minimum, the DNS Operator MUST be registered as a confidential OAuth 2.0 client at the registrar's AS or use a publicly verifiable client authentication method.</t>
 </section>
 
 <section anchor="change-history"><name>Change History</name>
@@ -421,15 +351,6 @@
     <date year="2026"></date>
   </front>
   <seriesInfo name="Internet-Draft" value="draft-wullink-rpp-oauth2-00"></seriesInfo>
-</reference>
-<reference anchor="REST" target="http://www.ics.uci.edu/~fielding/pubs/dissertation/rest_arch_style.htm">
-  <front>
-    <title>Architectural Styles and the Design of Network-based Software Architectures</title>
-    <author fullname="Roy Fielding" initials="R." surname="Fielding">
-      <organization></organization>
-    </author>
-    <date year="2000"></date>
-  </front>
 </reference>
 <xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.2119.xml"/>
 <xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.3986.xml"/>
