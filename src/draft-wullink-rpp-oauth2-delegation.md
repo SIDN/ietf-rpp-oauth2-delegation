@@ -38,7 +38,7 @@ organization = "DENIC"
 
 .# Abstract
 
-This document describes how OAuth 2.0 [@!RFC6749] enables a third party, such as a DNS Operator, to manage delegation (name server) details for a domain name on behalf of the registrant using the RESTful Provisioning Protocol (RPP). It extends the RPP OAuth 2.0 authorization model defined in [@!I-D.wullink-rpp-oauth2] with mechanisms specific to third-party delegation management via RPP [@!I-D.wullink-rpp-core].
+This document describes how OAuth 2.0 [@!RFC6749] enables a third party, such as a DNS Operator, to manage delegation (name server) details for a domain name on behalf of the registrant using the RESTful Provisioning Protocol (RPP). It extends the RPP OAuth 2.0 authorization model defined in [@!I-D.wullink-rpp-oauth2] with mechanisms specific to third-party delegation management via RPP [@!I-D.ietf-rpp-core].
 
 {mainmatter}
 
@@ -343,17 +343,3 @@ TODO
 # Acknowledgements
 
 TODO
-
-<reference anchor="I-D.wullink-rpp-oauth2" target="https://sidn.github.io/ietf-rpp-oauth2/draft-wullink-rpp-oauth2.html">
-  <front>
-    <title>RESTful Provisioning Protocol (RPP) - OAuth 2.0</title>
-    <author initials="M." surname="Wullink" fullname="Maarten Wullink">
-      <organization>SIDN Labs</organization>
-    </author>
-    <author initials="P." surname="Kowalik" fullname="Pawel Kowalik">
-      <organization>DENIC</organization>
-    </author>
-    <date year="2026"/>
-  </front>
-  <seriesInfo name="Internet-Draft" value="draft-wullink-rpp-oauth2-00"/>
-</reference>
