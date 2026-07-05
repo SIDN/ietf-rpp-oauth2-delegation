@@ -56,13 +56,9 @@ This document defines a mechanism based on OAuth 2.0 federation that enables thi
 
 In this document the following terminology is used.
 
-RESTful Provisioning Protocol or RPP - The protocol described in this document.
-
 URL - A Uniform Resource Locator as defined in [@!RFC3986].
 
 Resource - An object having a type, data, and possible relationship to other resources, identified by a URL.
-
-RPP client - An HTTP user agent performing an RPP request.
 
 RPP server - An HTTP server responsible for processing requests and returning results in any supported media type.
 
