@@ -5,8 +5,8 @@
 Network Working Group                                         M. Wullink
 Internet-Draft                                                 SIDN Labs
 Intended status: Standards Track                              P. Kowalik
-Expires: 1 November 2026                                           DENIC
-                                                           30 April 2026
+Expires: 7 January 2027                                            DENIC
+                                                             6 July 2026
 
 
   Secure Delegation Management for RESTful Provisioning Protocol (RPP)
@@ -16,11 +16,11 @@ Abstract
 
    This document describes how OAuth 2.0 [RFC6749] enables a third
    party, such as a DNS Operator, to manage delegation (name server)
-   details for a domain on behalf of the registrant using the RESTful
-   Provisioning Protocol (RPP).  It extends the RPP OAuth 2.0
+   details for a domain name on behalf of the registrant using the
+   RESTful Provisioning Protocol (RPP).  It extends the RPP OAuth 2.0
    authorization model defined in [I-D.wullink-rpp-oauth2] with
-   mechanisms specific to third-party delegation management via the
-   RESTful Provisioning Protocol (RPP) [I-D.wullink-rpp-core].
+   mechanisms specific to third-party delegation management via RPP
+   [I-D.ietf-rpp-core].
 
 Status of This Memo
 
@@ -37,7 +37,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 1 November 2026.
+   This Internet-Draft will expire on 7 January 2027.
 
 Copyright Notice
 
@@ -77,27 +77,27 @@ Table of Contents
 
 1.  Introduction
 
-   *NOTE:* This is a very early draft of how third-party delegation
-   management could work in RPP.  It is added here to provide an idea of
-   the possible delegation flow and to facilitate discussion.  This
-   document is expected to be significantly revised and updated as the
-   delegation management flow and the security mechanisms are further
-   developed and refined.
+   *NOTE:* This is an early draft of how third-party delegation
+   management could work in RPP.  It is provided to give an idea of the
+   possible delegation flow and to facilitate discussion.  This document
+   is expected to be significantly revised and updated as the delegation
+   management flow and the security mechanisms are further developed and
+   refined.
 
-   In the domain name system, delegation refers to the assignment of
+   In the Domain Name System, delegation refers to the assignment of
    name servers responsible for a DNS zone.  The registry holds
-   authoritative delegation data.  The name server (NS) records and
-   associated glue records for each domain in its database.  Ordinarily
-   only the sponsoring registrar, acting on behalf of the registrant,
-   may update this data via the RPP API.
+   authoritative delegation data, specifically the name server (NS)
+   records and associated glue records for each domain name in its
+   database.  Ordinarily, only the sponsoring registrar, acting on
+   behalf of the registrant, may update this data via the RPP API.
 
    An increasingly common operational pattern is for a registrant to
-   host their DNS with a dedicated DNS Operator that is not the
-   sponsoring registrar.  When the registrant wants the DNS Operator to
-   manage their delegation settings it is inconvenient and error-prone
-   to require the registrant to relay every change through their
-   registrar or configure it manually using registrar provided tools.
-   Instead, the registrant should be able to grant the DNS Operator
+   host its DNS with a dedicated DNS Operator that is not the sponsoring
+   registrar.  When the registrant wants the DNS Operator to manage its
+   delegation settings, it is inconvenient and error-prone to require
+   the registrant to relay every change through the registrar or to
+   configure it manually using registrar-provided tools.  Instead, a
+   possible solution is for the registrant to grant the DNS Operator
    limited, revocable authority to update delegation data directly at
    the registry using the RPP API.
 
@@ -108,23 +108,16 @@ Table of Contents
    explicit, domain-scoped consent for the DNS Operator to manage
    delegation data.  The registrar's AS issues a signed access token
    that the DNS Operator presents to the registry when submitting an RPP
-   domain update requests.  The registry validates the token locally
-   using the registrar's AS public key and authorises the update if the
-   token is valid.
+   domain update request.
 
 2.  Terminology
 
    In this document the following terminology is used.
 
-   RESTful Provisioning Protocol or RPP - The protocol described in this
-   document.
-
    URL - A Uniform Resource Locator as defined in [RFC3986].
 
    Resource - An object having a type, data, and possible relationship
    to other resources, identified by a URL.
-
-   RPP client - An HTTP user agent performing an RPP request.
 
    RPP server - An HTTP server responsible for processing requests and
    returning results in any supported media type.
@@ -134,11 +127,11 @@ Table of Contents
    Registrant - The holder of a registered domain name, who has an
    account at the sponsoring registrar.
 
-   Registrar - The accredited sponsoring registrar for a domain.  The
-   registrar operates an Authorization Server and maintains registrant
-   accounts.
+   Registrar - The accredited sponsoring registrar for a domain name.
+   The registrar operates an Authorization Server and maintains
+   registrant accounts.
 
-   Registry - The authoritative operator of the top-level domain,
+   Registry - The authoritative operator of the top-level domain name,
    operating the RPP server.  The registry stores delegation data and
    validates access tokens.
 
@@ -157,13 +150,13 @@ Table of Contents
    NOT","SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in
    this document are to be interpreted as described in [RFC2119].
 
-   In examples, indentation and white space in examples are provided
-   only to illustrate element relationships and are not REQUIRED
-   features of the protocol.
+   In examples, indentation and white space are provided only to
+   illustrate element relationships and are not REQUIRED features of the
+   protocol.
 
    All example requests assume an RPP server using HTTP version 2 is
    listening on the standard HTTPS port on host rpp.example.  An
-   authorization token has been provided by an out of band process and
+   authorization token has been provided by an out-of-band process and
    MUST be used by the client to authenticate each request.
 
 4.  Use Case
@@ -178,7 +171,7 @@ Table of Contents
 
    1.  DNS Operator B can update delegation data (name servers and glue
        records) for foo.example at the registry directly.
-   2.  The authority is scoped to delegation management only, e.g.  DNS
+   2.  The authority is scoped to delegation management only, e.g. DNS
        Operator B cannot modify registrant contact data, initiate
        transfers, or perform any other operation.
    3.  The authority is granted explicitly by the registrant via an
@@ -204,10 +197,10 @@ Table of Contents
    For the delegation management flow, the DNS Operator includes an
    authorization_details object of type delegation in the authorization
    request to the registrar's AS.  The registrant sees exactly which
-   domain they are consenting to allow the DNS Operator to manage.  The
-   AS MUST echo the authorization_details object back as a claim in the
-   issued JWT, giving the registry verifiable, tamper-proof evidence of
-   what was authorized and for which domain.
+   domain name they are consenting to allow the DNS Operator to manage.
+   The AS MUST echo the authorization_details object back as a claim in
+   the issued JWT, giving the registry verifiable, tamper-proof evidence
+   of what was authorized and for which domain name.
 
    The type field MUST be set to delegation.  Table Table 1 lists the
    RAR fields defined for RPP delegation management.
@@ -224,7 +217,7 @@ Table of Contents
    +-------------------+--------+-------------+------------------------+
    | object_identifier | String | REQUIRED    | The unique identifier  |
    |                   |        |             | of the specific        |
-   |                   |        |             | domain whose           |
+   |                   |        |             | domain name whose      |
    |                   |        |             | delegation data is to  |
    |                   |        |             | be managed (e.g.,      |
    |                   |        |             | foo.example).          |
@@ -245,8 +238,8 @@ Table of Contents
    The registrar's AS MUST echo the authorization_details back as a
    claim in the issued JWT.  The registry MUST validate the
    authorization_details claim in the token and MUST verify that
-   object_type and object_identifier match the domain whose delegation
-   data is being updated.
+   object_type and object_identifier match the domain name whose
+   delegation data is being updated.
 
    When the registrar's AS does not support RAR ([RFC9396]), the
    specific object being managed MUST be conveyed via the rpp_op_type,
@@ -255,22 +248,22 @@ Table of Contents
    set to delegation.  The rpp_object_type claim MUST be set to the RPP
    object type being managed, for delegation type this MUST be domain.
    The rpp_object_identifier claim MUST be set to the specific domain
-   being managed (e.g., foo.example).  The registry MUST validate that
-   these claim values match the domain being managed.
+   name being managed (e.g., foo.example).  The registry MUST validate
+   that these claim values match the domain name being managed.
 
 6.  Scopes
 
    RPP OAuth 2.0 scopes are defined in [I-D.wullink-rpp-oauth2].
-   Delegation management introduces new delegation specific scopes:
-   delegation:read.  This scope grants the bearer the right to update
-   delegation data (name servers and glue records) for a specific
-   domain, as further constrained by the authorization_details claim.
+   Delegation management introduces new delegation-specific scopes.
+   These scopes grant the bearer the right to read or update delegation
+   data (name servers and glue records) for a specific domain name, as
+   further constrained by the authorization_details claim.
 
-   Table Table 2 defines the the new OAuth 2.0 scopes for Delegation
+   Table Table 2 defines the new OAuth 2.0 scopes for Delegation
    Management.  Each scope grants a specific set of permissions on the
-   RPP domain resource.  The registry MUST enforce that the access token
-   presented in a delegation update request contains the appropriate
-   scope(s) for the requested operation.
+   RPP domain name resource.  The registry MUST enforce that the access
+   token presented in a delegation update request contains the
+   appropriate scopes for the requested operation.
 
        +===================+=============+========================+
        | Scope             | Data Object | Operations Granted     |
@@ -308,7 +301,7 @@ Table of Contents
       construct the consent redirect.
    -  The AS's JWKS endpoint URI or the public key material itself, used
       by the registry to validate tokens issued by that AS.
-   -  TODO
+   -  ...
 
    The registry stores this metadata as part of the registrar's profile
    and makes it available to approved DNS operators as part of the
@@ -348,7 +341,7 @@ Table of Contents
       require pre-registration with the registry to access the RPP API,
       but require no bilateral arrangement with any individual
       registrar.
-   -  Tokens are scoped to a single domain and a specific set of
+   -  Tokens are scoped to a single domain name and a specific set of
       actions, limiting the impact of a compromised token.
 
 9.  Delegation Management Flow
@@ -361,13 +354,13 @@ Table of Contents
 
    Before redirecting the registrant, the DNS Operator MUST first query
    the registry's discovery endpoint to resolve the sponsoring
-   registrar's AS authorization URI for the domain.  The sponsoring
-   registrar is identified from the domain's current registrar data in
-   the registry.
+   registrar's AS authorization URI for the domain name.  The sponsoring
+   registrar is identified from the domain name's current registrar data
+   in the registry.
 
-   The authorization request MUST convey the specific domain and the set
-   of requested actions so that the registrar's AS can present the
-   registrant with an accurate consent screen.
+   The authorization request MUST convey the specific domain name and
+   the set of requested actions so that the registrar's AS can present
+   the registrant with an accurate consent screen.
 
    The following diagram illustrates the complete delegation management
    flow:
@@ -509,14 +502,14 @@ Table of Contents
    13.  The DNS Operator submits the delegation update request to the
         registry RPP API, including the JWT as a Bearer token in the
         Authorization header.  The request targets the delegation sub-
-        resource of the domain (e.g., PATCH /domains/foo.example/
+        resource of the domain name (e.g., PATCH /domains/foo.example/
         delegation).
    14.  The registry validates the JWT locally using the sponsoring
         registrar's AS public key (obtained via OAuth 2.0 Authorization
         Server Metadata [RFC8414]).  No live call to the registrar is
         required.  The registry MUST verify that the
         authorization_details claim contains an object_identifier that
-        matches the domain in the request.
+        matches the domain name in the request.
    15.  Notify the registrar of the delegation update, so that the
         registrar can reflect the change in its own systems and provide
         accurate information to the registrant.
@@ -538,9 +531,9 @@ Table of Contents
       and JWKS URI or public key material.
 
    *TODO* Add model of the actual data objects for delegation
-   management, e.g. the delegation sub-resource of the domain object,
-   and the expected request and response formats for delegation update
-   requests.
+   management, e.g. the delegation sub-resource of the domain name
+   object, and the expected request and response formats for delegation
+   update requests.
 
    TODO
 
@@ -571,7 +564,7 @@ Table of Contents
    domain name and to the specific set of actions granted by the
    registrant.  The registry MUST reject tokens that do not contain an
    authorization_details object whose object_identifier exactly matches
-   the domain in the request URL.
+   the domain name in the request URL.
 
    *Token lifetime.* Access tokens for delegation management MAY have a
    longer lifetime than tokens used for single-use operations such as
@@ -587,9 +580,9 @@ Table of Contents
    revocation endpoint.
 
    *Consent granularity.* The RAR authorization_details object allows
-   the registrant to see exactly which domain and which actions they are
-   consenting to.  Registrar ASs MUST surface this information clearly
-   on the consent screen.
+   the registrant to see exactly which domain name and which actions
+   they are consenting to.  Registrar ASs MUST surface this information
+   clearly on the consent screen.
 
 15.  Change History
 
@@ -600,19 +593,19 @@ Table of Contents
 
 16.  Normative References
 
-   [I-D.wullink-rpp-core]
+   [I-D.ietf-rpp-core]
               Wullink, M. and P. Kowalik, "RESTful Provisioning Protocol
-              (RPP)", Work in Progress, Internet-Draft, draft-wullink-
-              rpp-core-05, 15 March 2026,
-              <https://datatracker.ietf.org/doc/html/draft-wullink-rpp-
-              core-05>.
+              (RPP)", Work in Progress, Internet-Draft, draft-ietf-rpp-
+              core-00, 6 July 2026,
+              <https://datatracker.ietf.org/doc/html/draft-ietf-rpp-
+              core-00>.
 
    [I-D.wullink-rpp-oauth2]
-              Wullink, M. and P. Kowalik, "RESTful Provisioning Protocol
-              (RPP) - OAuth 2.0", Work in Progress, Internet-Draft,
-              draft-wullink-rpp-oauth2-00, 2026,
-              <https://sidn.github.io/ietf-rpp-oauth2/draft-wullink-rpp-
-              oauth2.html>.
+              Wullink, M. and P. Kowalik, "OAuth 2.0 for RESTful
+              Provisioning Protocol (RPP)", Work in Progress, Internet-
+              Draft, draft-wullink-rpp-oauth2-00, 6 July 2026,
+              <https://datatracker.ietf.org/doc/html/draft-wullink-rpp-
+              oauth2-00>.
 
    [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
               Requirement Levels", BCP 14, RFC 2119,
